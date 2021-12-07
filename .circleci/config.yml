@@ -1,0 +1,16 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: circleci/openjdk:8-jdk-stretch
+    steps:
+      - checkout
+      - run:
+          name: Build
+          command: mvn -B clean install
+
+workflows:
+  sample: 
+    jobs:
+      - build-and-test
