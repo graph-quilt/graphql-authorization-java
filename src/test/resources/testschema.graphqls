@@ -1,0 +1,50 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type Mutation{
+  createNewBookRecord(input: BookInput) : Book
+  updateBookRecord(input: BookInput) : Book
+  removeBookRecord(input: BookID) : Book
+}
+
+type Query {
+  bookById(id: ID): Book
+}
+
+type Book {
+  id: ID
+  name: String
+  pageCount: Int
+  author: Author
+  rating: Rating
+}
+
+input BookInput {
+  id: ID
+  name: String
+  pageCount: Int
+  author: AuthorInput
+}
+
+input AuthorInput {
+  id: ID
+  firstName: String
+  lastName: String
+}
+
+input BookID {
+  id: ID
+}
+
+type Author {
+  id: ID
+  firstName: String
+  lastName: String
+}
+
+type Rating {
+  comments: String
+  stars: String
+}
