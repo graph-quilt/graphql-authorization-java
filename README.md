@@ -10,6 +10,11 @@ This library responsible for enforcing access control for schema types and field
 
 -----
 
+
+[Builds](https://app.circleci.com/pipelines/github/intuit/graphql-authorization-java)    
+
+[![CircleCI](https://circleci.com/gh/intuit/graphql-authorization-java/tree/master.svg?style=shield)](https://app.circleci.com/pipelines/github/intuit/graphql-authorization-java)
+
 ### Description
 
 This library enabled access control for accessing types and fields when making a graphql request.
@@ -48,10 +53,6 @@ It currently supports queries for 3rd party clients.
  ```
 builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSchema, principleFetcher))
  ```
- 
- You can look at the sample app for reference :
- [sample graphql Authz app](https://github.intuit.com/intuit-api/sampleapp-graphql-authz)
-
 
 #### Maven coordinates:
 
