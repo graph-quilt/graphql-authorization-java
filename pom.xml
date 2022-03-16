@@ -39,7 +39,7 @@
   <properties>
     <junit5.version>5.5.0</junit5.version>
     <lombok.version>1.16.20</lombok.version>
-    <graphql-java.version>14.1</graphql-java.version>
+    <graphql-java.version>17.3</graphql-java.version>
   </properties>
 
   <profiles>
