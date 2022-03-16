@@ -9,6 +9,7 @@ public class AuthzClient {
   private ClientAuthorizationType type;
 
   public enum ClientAuthorizationType {
-    OFFLINE
+    OFFLINE,
+    PRIVATE_AUTH_PLUS
   }
 }

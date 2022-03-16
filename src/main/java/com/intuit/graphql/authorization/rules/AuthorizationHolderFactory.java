@@ -1,6 +1,5 @@
 package com.intuit.graphql.authorization.rules;
 
-import com.intuit.graphql.authorization.config.ApiScopesProperties.ApiScopeRuleSet;
 import com.intuit.graphql.authorization.config.AuthzClient;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLType;
@@ -63,49 +62,6 @@ public class AuthorizationHolderFactory {
 
     log.info("Parsed rules for scopes " + scopeToTypeMap.keySet());
     return Collections.unmodifiableMap(scopeToTypeMap);
-  }
-
-  @Deprecated
-  public Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> parse(
-      List<ApiScopeRuleSet> apiScopeRules) {
-    Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> scopeToTypeMap = new HashMap<>();
-
-    apiScopeRules.forEach(apiScopeRule -> {
-      String scope = apiScopeRule.getId().getScope();
-      Map<GraphQLType, Set<GraphQLFieldDefinition>> graphQLTypeHashSetHashMap = new HashMap<>();
-      apiScopeRule.getRules()
-          .forEach(rule -> {
-            Map<GraphQLType, Set<GraphQLFieldDefinition>> ruleSetMap = ruleParsers.stream()
-                .filter(ruleParser -> ruleParser.supports(rule.getType()))
-                .map(ruleParser -> {
-                  try {
-                    return ruleParser.parseRules(rule.getValues());
-                  } catch (Exception e) {
-                    //parseRules logs and throws exception, no need for duplicate logging
-                    //however, there is opportunity to make this a little cleaner - we cannot assume that
-                    //parseRules will always log or always throw.
-                    return null;
-                  }
-                })
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(new HashMap<>());
-
-            ruleSetMap.forEach((type, fields) ->
-                graphQLTypeHashSetHashMap.merge(type, fields, (oldSet, newSet) -> {
-                  oldSet.addAll(newSet);
-                  return oldSet;
-                }));
-          });
-
-      if (!graphQLTypeHashSetHashMap.isEmpty()) {
-        scopeToTypeMap.put(scope, graphQLTypeHashSetHashMap);
-      }
-
-    });
-
-    log.info("Parsed rules for scopes " + scopeToTypeMap.keySet());
-    return (Collections.unmodifiableMap(scopeToTypeMap));
   }
 }
 
