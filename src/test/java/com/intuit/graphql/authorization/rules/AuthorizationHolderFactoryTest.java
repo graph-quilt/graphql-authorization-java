@@ -24,7 +24,7 @@ public class AuthorizationHolderFactoryTest {
   public void failsToParseRules() {
     RuleParser ruleParser = mock(RuleParser.class);
 
-    when(ruleParser.supports(any(ClientAuthorizationType.class)))
+    when(ruleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     when(ruleParser.parseRule(anyString()))
@@ -49,7 +49,7 @@ public class AuthorizationHolderFactoryTest {
   public void mergesMultipleRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    when(mockRuleParser.supports(any(ClientAuthorizationType.class)))
+    when(mockRuleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();
@@ -99,7 +99,7 @@ public class AuthorizationHolderFactoryTest {
   public void returnsTypeMapForValidRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    when(mockRuleParser.supports(any(ClientAuthorizationType.class)))
+    when(mockRuleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();

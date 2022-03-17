@@ -35,11 +35,11 @@ public class AuthorizationHolderFactory {
       Map<GraphQLType, Set<GraphQLFieldDefinition>> intermediateResults = new HashMap<>();
 
       final RuleParser ruleParser = ruleParsers.stream()
-          .filter(potentialRuleParser -> potentialRuleParser.supports(authzClient.getType()))
+          .filter(potentialRuleParser -> potentialRuleParser.isRuleTypeSupported(authzClient.getType()))
           .findFirst()
           .orElse(null);
 
-      if(ruleParser == null) {
+      if (ruleParser == null) {
         continue;
       }
 

@@ -1,6 +1,6 @@
 package com.intuit.graphql.authorization.rules;
 
-import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
+import com.intuit.graphql.authorization.config.RuleType;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLType;
 import java.util.List;
@@ -13,5 +13,5 @@ public interface RuleParser {
 
   Map<GraphQLType, Set<GraphQLFieldDefinition>> parseRule(String rule);
 
-  boolean supports(ClientAuthorizationType clientAuthorizationType);
+  boolean isRuleTypeSupported(RuleType type);
 }

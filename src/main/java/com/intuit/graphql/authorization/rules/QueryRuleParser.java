@@ -1,6 +1,7 @@
 package com.intuit.graphql.authorization.rules;
 
 import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
+import com.intuit.graphql.authorization.config.RuleType;
 import graphql.analysis.QueryTraverser;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.analysis.QueryVisitorStub;
@@ -78,8 +79,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   @Override
-  public boolean supports(final ClientAuthorizationType clientAuthorizationType) {
-    return clientAuthorizationType == ClientAuthorizationType.OFFLINE
-        || clientAuthorizationType == ClientAuthorizationType.PRIVATE_AUTH_PLUS;
+  public boolean isRuleTypeSupported(RuleType type) {
+    return type.equals(ClientAuthorizationType.OFFLINE) ||  type.equals(ClientAuthorizationType.ONLINE);
   }
 }
