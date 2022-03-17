@@ -5,7 +5,7 @@ import static junit.framework.TestCase.assertTrue;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import com.intuit.graphql.authorization.config.AuthzClient;
+import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -14,11 +14,6 @@ import graphql.execution.ExecutionContext;
 import graphql.schema.GraphQLSchema;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,6 +23,7 @@ public class AuthZListenerTest {
   private GraphQL graphql;
   private AuthzInstrumentation instrumentation;
   private TestAuthZListener authzListener;
+  private AuthzClientConfiguration authzClientConfiguration;
   private String requestAllFields;
   private String requestWithFragments;
   private String requestWithInvalidFragment;
@@ -40,27 +36,14 @@ public class AuthZListenerTest {
     requestWithFragments = HelperUtils.readString("queries/requestWithFragments.txt");
     requestWithInvalidFragment = HelperUtils.readString("queries/requestWithInvalidFragment.txt");
 
-    //Queries By Client
-    Map<AuthzClient, List<String>> queriesByClient = new HashMap<>();
-    AuthzClient client1 = HelperUtils
-        .yamlMapper().readValue(HelperUtils.read("mocks.graphqlauthz/client/client1.yml"), AuthzClient.class);
-    AuthzClient client2 = HelperUtils
-        .yamlMapper().readValue(HelperUtils.read("mocks.graphqlauthz/client/client2.yml"), AuthzClient.class);
-    queriesByClient.put(client1, Collections.singletonList(
-        HelperUtils.readString("mocks.graphqlauthz/client/client1-permissions.graphql")
-    ));
-    queriesByClient.put(client2, Arrays.asList(
-        HelperUtils.readString("mocks.graphqlauthz/client/client2-permissions-query.graphql"),
-        HelperUtils.readString("mocks.graphqlauthz/client/client2-permissions-mutation.graphql")
-    ));
-
     //Executable Schema
     URL url = Resources.getResource("testschema.graphqls");
     String sdl = Resources.toString(url, Charsets.UTF_8);
     GraphQLSchema executableSchema = HelperBuildTestSchema.buildSchema(sdl);
 
     authzListener = new TestAuthZListener();
-    instrumentation = new AuthzInstrumentation(() -> queriesByClient, executableSchema, new HelperPrincipleFetcher(),
+    authzClientConfiguration = new HelperAuthzClientConfiguration();
+    instrumentation = new AuthzInstrumentation(authzClientConfiguration, executableSchema, new HelperPrincipleFetcher(),
         authzListener);
 
     GraphQL.Builder builder = GraphQL.newGraphQL(executableSchema);
@@ -70,7 +53,7 @@ public class AuthZListenerTest {
 
   @Test
   public void authZWithSomeRedactionTest() {
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Intuit.client2")
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client2")
         .build();
 
     ExecutionResult result = graphql.execute(executionInput);
@@ -90,7 +73,7 @@ public class AuthZListenerTest {
 
   @Test
   public void authZWithNoFieldRedactionTest() {
-    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Intuit.client1")
+    ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client1")
         .build();
 
     ExecutionResult result = graphql.execute(executionInput);
@@ -107,7 +90,7 @@ public class AuthZListenerTest {
   @Test
   public void authzWithFragmentRedactionTest() {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestWithInvalidFragment)
-        .context("Intuit.client2").build();
+        .context("Test.client2").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
@@ -124,7 +107,7 @@ public class AuthZListenerTest {
   @Test
   public void authzNoFragmentRedactionTest() {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestWithFragments)
-        .context("Intuit.client1").build();
+        .context("Test.client1").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
