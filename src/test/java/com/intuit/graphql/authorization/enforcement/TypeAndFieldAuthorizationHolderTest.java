@@ -2,15 +2,12 @@ package com.intuit.graphql.authorization.enforcement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import com.intuit.graphql.authorization.config.ApiScopesProperties;
+import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLSchema;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -29,12 +26,11 @@ import org.mockito.junit.MockitoRule;
 public class TypeAndFieldAuthorizationHolderTest {
 
   private AuthorizationHolder authorizationHolder;
+  private AuthzClientConfiguration authzClientConfiguration;
   private GraphQLSchema schema;
 
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
-
-
   GraphQLFieldsContainer queryType, bookType;
   GraphQLFieldDefinition bookInfo, authorInfo, ratingInfo;
 
@@ -44,18 +40,15 @@ public class TypeAndFieldAuthorizationHolderTest {
     URL url = Resources.getResource("testschema.graphqls");
     String sdl = Resources.toString(url, Charsets.UTF_8);
     schema = HelperBuildTestSchema.buildSchema(sdl);
+    authzClientConfiguration = new HelperAuthzClientConfiguration();
     queryType = (GraphQLFieldsContainer) schema.getType("Query");
     bookType = (GraphQLFieldsContainer) schema.getType("Book");
     bookInfo = queryType.getFieldDefinition("bookById");
     authorInfo = bookType.getFieldDefinition("author");
     ratingInfo = bookType.getFieldDefinition("rating");
 
-    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-    ApiScopesProperties properties = mapper
-        .readValue(new File("src/test/resources/application-apiscopes.yml"), ApiScopesProperties.class);
-
     this.authorizationHolder = new AuthorizationHolder(
-        AuthzInstrumentation.getAuthorizationFactory(schema).parse(properties.getApiscopes()));
+        AuthzInstrumentation.getAuthorizationFactory(schema).parse(authzClientConfiguration.getQueriesByClient()));
 
   }
 
@@ -66,10 +59,8 @@ public class TypeAndFieldAuthorizationHolderTest {
 
   @Test
   public void unknownScopeHasNoPermissions() {
-    Set<String> scopes = new HashSet<String>(Arrays.asList("foo"));
+    Set<String> scopes = new HashSet<String>(Arrays.asList("Test.unknown"));
     TypeFieldPermissionVerifier verifier = authorizationHolder.getPermissionsVerifier(scopes, schema);
-    //TODO: is this correct?
-//    assertThat(verifier.isPermitted(queryType)).isFalse();
     assertThat(verifier.isPermitted(bookType)).isFalse();
     assertThat(verifier.isPermitted(queryType, bookInfo)).isFalse();
     assertThat(verifier.isPermitted(bookType, authorInfo)).isFalse();
@@ -78,7 +69,7 @@ public class TypeAndFieldAuthorizationHolderTest {
   @Test
   public void validScopeHasCorrectPermissions() {
 
-    Set<String> scopes = new HashSet<String>(Arrays.asList("AAA01"));
+    Set<String> scopes = new HashSet<String>(Arrays.asList("Test.client2"));
     TypeFieldPermissionVerifier verifier = authorizationHolder.getPermissionsVerifier(scopes, schema);
     assertThat(verifier.isPermitted(queryType)).isTrue();
     assertThat(verifier.isPermitted(bookType)).isTrue();
@@ -89,7 +80,7 @@ public class TypeAndFieldAuthorizationHolderTest {
 
   @Test
   public void multipleScopesHaveMorePermissions() {
-    Set<String> scopes = new HashSet<String>(Arrays.asList("AAA01", "BBB02"));
+    Set<String> scopes = new HashSet<String>(Arrays.asList("Test.client2", "Test.client1"));
     TypeFieldPermissionVerifier verifier = authorizationHolder.getPermissionsVerifier(scopes, schema);
     assertThat(verifier.isPermitted(queryType)).isTrue();
     assertThat(verifier.isPermitted(bookType)).isTrue();

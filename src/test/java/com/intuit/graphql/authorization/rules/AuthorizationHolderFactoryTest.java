@@ -2,15 +2,10 @@ package com.intuit.graphql.authorization.rules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.intuit.graphql.authorization.config.ApiScopesProperties.ApiScopeRuleSet;
-import com.intuit.graphql.authorization.config.ApiScopesProperties.Id;
-import com.intuit.graphql.authorization.config.ApiScopesProperties.Rule;
-import com.intuit.graphql.authorization.config.ApiScopesProperties.RuleType;
 import com.intuit.graphql.authorization.config.AuthzClient;
 import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
 import graphql.schema.GraphQLFieldDefinition;
@@ -29,7 +24,7 @@ public class AuthorizationHolderFactoryTest {
   public void failsToParseRules() {
     RuleParser ruleParser = mock(RuleParser.class);
 
-    when(ruleParser.supports(any(ClientAuthorizationType.class)))
+    when(ruleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     when(ruleParser.parseRule(anyString()))
@@ -54,7 +49,7 @@ public class AuthorizationHolderFactoryTest {
   public void mergesMultipleRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    when(mockRuleParser.supports(any(ClientAuthorizationType.class)))
+    when(mockRuleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();
@@ -104,7 +99,7 @@ public class AuthorizationHolderFactoryTest {
   public void returnsTypeMapForValidRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    when(mockRuleParser.supports(any(ClientAuthorizationType.class)))
+    when(mockRuleParser.isRuleTypeSupported(any(ClientAuthorizationType.class)))
         .thenReturn(true);
 
     Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();
@@ -126,31 +121,5 @@ public class AuthorizationHolderFactoryTest {
     final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> result = factory.parse(queriesByClient);
 
     assertThat(result).isNotEmpty();
-  }
-
-  @Test
-  public void returnsEmptyListIfRulesFailedToParse() {
-    RuleParser ruleParser = mock(RuleParser.class);
-
-    when(ruleParser.supports(any(RuleType.class)))
-        .thenReturn(true);
-
-    when(ruleParser.parseRules(anyList()))
-        .thenThrow(new RuntimeException("boom"));
-
-    AuthorizationHolderFactory factory = new AuthorizationHolderFactory(Collections.singleton(ruleParser));
-
-    ApiScopeRuleSet ruleSet = new ApiScopeRuleSet();
-    Id id = new Id();
-    id.setScope("test_scope");
-    ruleSet.setId(id);
-
-    Rule rule = new Rule();
-
-    ruleSet.setRules(Collections.singletonList(rule));
-
-    final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> result = factory
-        .parse(Collections.singletonList(ruleSet));
-    assertThat(result).isEmpty();
   }
 }

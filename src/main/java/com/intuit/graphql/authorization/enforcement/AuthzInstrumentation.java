@@ -1,13 +1,11 @@
 package com.intuit.graphql.authorization.enforcement;
 
-import com.intuit.graphql.authorization.config.ApiScopesProperties.ApiScopeRuleSet;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
-import com.intuit.graphql.authorization.config.AuthzConfiguration;
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
 import com.intuit.graphql.authorization.rules.RuleParser;
-import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
+import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQLError;
@@ -65,18 +63,6 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
     this.principleFetcher = principleFetcher;
     this.authzListener = (Objects.nonNull(authzListener)) ? authzListener : DEFAULT_AUTHZ_LISTENER;
   }
-
-  @Deprecated
-  public AuthzInstrumentation(AuthzConfiguration authzConfiguration, GraphQLSchema graphQLSchema,
-      PrincipleFetcher principleFetcher) {
-    if (CollectionUtils.isEmpty(authzConfiguration.getPermissions().getApiscopes())) {
-      throw new NullPointerException("MISSING APISCOPES IN CONFIGURATION");
-    }
-    List<ApiScopeRuleSet> apiscopes = authzConfiguration.getPermissions().getApiscopes();
-    this.authorizationHolder = new AuthorizationHolder(getAuthorizationFactory(graphQLSchema).parse(apiscopes));
-    this.principleFetcher = principleFetcher;
-  }
-
 
   @Override
   public AuthzInstrumentationState createState(InstrumentationCreateStateParameters parameters) {

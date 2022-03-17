@@ -1,7 +1,7 @@
 package com.intuit.graphql.authorization.rules;
 
-import com.intuit.graphql.authorization.config.ApiScopesProperties.RuleType;
 import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
+import com.intuit.graphql.authorization.config.RuleType;
 import graphql.analysis.QueryTraverser;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.analysis.QueryVisitorStub;
@@ -32,7 +32,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
 
-  Map<GraphQLType, Set<GraphQLFieldDefinition>> getTypesAndFieldsMap(String query) {
+  private Map<GraphQLType, Set<GraphQLFieldDefinition>> getTypesAndFieldsMap(String query) {
     Document document = new Parser().parseDocument(query);
 
     Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap = new HashMap<>();
@@ -79,12 +79,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   @Override
-  public boolean supports(RuleType ruleType) {
-    return ruleType == RuleType.GRAPHQL_QUERY;
-  }
-
-  @Override
-  public boolean supports(final ClientAuthorizationType clientAuthorizationType) {
-    return clientAuthorizationType == ClientAuthorizationType.OFFLINE;
+  public boolean isRuleTypeSupported(RuleType type) {
+    return type.equals(ClientAuthorizationType.OFFLINE) ||  type.equals(ClientAuthorizationType.ONLINE);
   }
 }
