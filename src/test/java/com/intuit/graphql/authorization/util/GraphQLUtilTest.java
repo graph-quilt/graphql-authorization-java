@@ -1,7 +1,9 @@
 package com.intuit.graphql.authorization.util;
 
 
+import graphql.Scalars;
 import graphql.introspection.Introspection;
+import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
@@ -16,10 +18,14 @@ public class GraphQLUtilTest {
 
     @Test
     public void isOperationTypeTest() {
+        GraphQLFieldDefinition fieldDefinition = GraphQLFieldDefinition.newFieldDefinition().name("foo").type(Scalars.GraphQLString).build();
         GraphQLSchema schema =  GraphQLSchema.newSchema()
-                    .query(GraphQLObjectType.newObject().name("myQuery").build())
-                    .mutation(GraphQLObjectType.newObject().name("myMutation").build())
-                    .subscription(GraphQLObjectType.newObject().name("mySubscription").build())
+                    .query(GraphQLObjectType.newObject().name("myQuery").field(
+                        fieldDefinition).build())
+                    .mutation(GraphQLObjectType.newObject().name("myMutation").field(
+                fieldDefinition).build())
+                    .subscription(GraphQLObjectType.newObject().name("mySubscription").field(
+                fieldDefinition).build())
                 .build();
         schema.getMutationType();
         Assertions.assertThat(GraphQLUtil.isOperationType(schema.getMutationType(), schema)).isTrue();

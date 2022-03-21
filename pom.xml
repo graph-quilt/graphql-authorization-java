@@ -37,7 +37,7 @@
   <properties>
     <junit5.version>5.5.0</junit5.version>
     <lombok.version>1.16.20</lombok.version>
-    <graphql-java.version>14.1</graphql-java.version>
+    <graphql-java.version>17.3</graphql-java.version>
   </properties>
 
   <profiles>
@@ -125,6 +125,7 @@
       <groupId>com.graphql-java</groupId>
       <artifactId>graphql-java</artifactId>
       <version>${graphql-java.version}</version>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -135,11 +136,7 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>26.0-jre</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>3.9</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.projectlombok</groupId>
@@ -148,24 +145,21 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.25</version>
-    </dependency>
-    <dependency>
       <groupId>com.fasterxml.jackson.dataformat</groupId>
       <artifactId>jackson-dataformat-yaml</artifactId>
       <version>2.9.8</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
       <version>2.9.8</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

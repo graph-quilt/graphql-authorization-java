@@ -16,14 +16,21 @@ import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.introspection.IntrospectionQuery;
 import graphql.schema.GraphQLSchema;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.apache.commons.collections4.CollectionUtils;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
-import org.junit.Before;
-import org.junit.Test;
+
 
 public class AuthorizationTest {
 
@@ -269,21 +276,19 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 19);
 
-    String results = types.toString();
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Author\",\"fields\":[{\"name\":\"firstName\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Book\",\"fields\":[{\"name\":\"id\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"},\"isDeprecated\":false},{\"name\":\"name\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false},{\"name\":\"pageCount\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"},\"isDeprecated\":false},{\"name\":\"author\",\"args\":[],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Author\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Query\",\"fields\":[{\"name\":\"bookById\",\"args\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Mutation\",\"fields\":[{\"name\":\"updateBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookID\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"name\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"pageCount\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"}},{\"name\":\"author\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"firstName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"lastName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}}]}"));
+
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("firstName")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("updateBookRecord")));
   }
 
 
@@ -305,23 +310,19 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 20);
 
-    String results = types.toString();
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Author\",\"fields\":[{\"name\":\"id\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"},\"isDeprecated\":false},{\"name\":\"firstName\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false},{\"name\":\"lastName\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Book\",\"fields\":[{\"name\":\"id\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"},\"isDeprecated\":false},{\"name\":\"name\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false},{\"name\":\"pageCount\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"},\"isDeprecated\":false},{\"name\":\"author\",\"args\":[],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Author\"},\"isDeprecated\":false},{\"name\":\"rating\",\"args\":[],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Rating\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Query\",\"fields\":[{\"name\":\"bookById\",\"args\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Rating\",\"fields\":[{\"name\":\"comments\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false},{\"name\":\"stars\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Mutation\",\"fields\":[{\"name\":\"createNewBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false},{\"name\":\"updateBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false},{\"name\":\"removeBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookID\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookID\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"name\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"pageCount\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"}},{\"name\":\"author\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"firstName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"lastName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}}]}"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Rating"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id","firstName","lastName")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author","rating")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("createNewBookRecord","updateBookRecord","removeBookRecord")));
   }
 
   @Test
@@ -342,23 +343,38 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 19);
 
-    String results = types.toString();
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Author\",\"fields\":[{\"name\":\"firstName\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Book\",\"fields\":[{\"name\":\"id\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"},\"isDeprecated\":false},{\"name\":\"name\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"},\"isDeprecated\":false},{\"name\":\"pageCount\",\"args\":[],\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"},\"isDeprecated\":false},{\"name\":\"author\",\"args\":[],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Author\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Query\",\"fields\":[{\"name\":\"bookById\",\"args\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"OBJECT\",\"name\":\"Mutation\",\"fields\":[{\"name\":\"createNewBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false},{\"name\":\"updateBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false},{\"name\":\"removeBookRecord\",\"args\":[{\"name\":\"input\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookID\"}}],\"type\":{\"kind\":\"OBJECT\",\"name\":\"Book\"},\"isDeprecated\":false}],\"interfaces\":[]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookID\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"BookInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"name\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"pageCount\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"Int\"}},{\"name\":\"author\",\"type\":{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\"}}]}"));
-    assertTrue(results.contains(
-        "{\"kind\":\"INPUT_OBJECT\",\"name\":\"AuthorInput\",\"inputFields\":[{\"name\":\"id\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"ID\"}},{\"name\":\"firstName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}},{\"name\":\"lastName\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\"}}]}"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
+    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
+    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("firstName")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("createNewBookRecord","updateBookRecord","removeBookRecord")));
+
   }
 
+  public boolean hasValue(JsonArray json, String key, String value, String key1, String value1) {
+    for(int i = 0; i < json.size(); i++) {  // iterate through the JsonArray
+      // first I get the 'i' JsonElement as a JsonObject, then I get the key as a string and I compare it with the value
+      if(json.get(i).getAsJsonObject().get(key).getAsString().equals(value) &&
+          json.get(i).getAsJsonObject().get(key1).getAsString().equals(value1)) return true;
+    }
+    return false;
+  }
+
+  public Set<String> getFields(JsonArray array, String fieldName) {
+    return StreamSupport.stream(array.spliterator(), true)
+        .map(JsonElement::getAsJsonObject)
+        .filter(js -> js.get("name").getAsString().equals(fieldName))
+        .flatMap(q -> StreamSupport.stream(q.getAsJsonArray("fields").spliterator(), true)
+            .map(f -> f.getAsJsonObject().get("name").getAsString())
+        ).collect(Collectors.toSet());
+  }
 
   private static String getGraphqlQuery(String filePath) {
     StringBuilder contentBuilder = new StringBuilder();
