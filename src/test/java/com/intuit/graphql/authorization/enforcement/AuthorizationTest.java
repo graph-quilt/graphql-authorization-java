@@ -1,21 +1,22 @@
 package com.intuit.graphql.authorization.enforcement;
 
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.intuit.graphql.authorization.config.AuthzConfiguration;
+import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
-import graphql.execution.instrumentation.parameters.InstrumentationCreateStateParameters;
 import graphql.introspection.IntrospectionQuery;
 import graphql.schema.GraphQLSchema;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -30,15 +31,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-import static junit.framework.TestCase.assertNull;
-import static junit.framework.TestCase.assertTrue;
 
 public class AuthorizationTest {
 
-  private InstrumentationCreateStateParameters instrumentationCreateStateParameters;
-  private AuthzConfiguration authzConfiguration = new HelperConfigFetcher();
   private ExecutionInput executionInput;
   private AuthzInstrumentation authzInstrumentation;
+  private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration();
   private PrincipleFetcher principleFetcher = new HelperPrincipleFetcher();
   private GraphQLSchema schema;
   private GraphQL graphql;
@@ -52,69 +50,69 @@ public class AuthorizationTest {
   @Before
   public void init() throws IOException {
 
-    try {
-      requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.txt");
-      requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.txt");
-      requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.txt");
-      requestWithInvalidFields = getGraphqlQuery("src/test/resources/queries/requestWithInvalidFields.txt");
-      mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.txt");
-      fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.txt");
+    requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.txt");
+    requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.txt");
+    requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.txt");
+    requestWithInvalidFields = getGraphqlQuery("src/test/resources/queries/requestWithInvalidFields.txt");
+    mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.txt");
+    fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.txt");
 
-      URL url = Resources.getResource("testschema.graphqls");
-      String sdl = Resources.toString(url, Charsets.UTF_8);
-      schema = HelperBuildTestSchema.buildSchema(sdl);
+    URL url = Resources.getResource("testschema.graphqls");
+    String sdl = Resources.toString(url, Charsets.UTF_8);
+    schema = HelperBuildTestSchema.buildSchema(sdl);
 
-      authzInstrumentation = new AuthzInstrumentation(authzConfiguration, schema,principleFetcher);
-      instrumentationCreateStateParameters = new InstrumentationCreateStateParameters(schema, executionInput);
-      GraphQL.Builder builder = GraphQL.newGraphQL(schema);
-      builder.instrumentation(authzInstrumentation);
-      graphql = builder.build();
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    authzInstrumentation = new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null);
+    GraphQL.Builder builder = GraphQL.newGraphQL(schema);
+    builder.instrumentation(authzInstrumentation);
+    graphql = builder.build();
   }
 
   @Test
   public void authzWithSomeRedactionsTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client2").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
-    assertTrue(result.getData().toString().equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(
+        result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
+    assertTrue(result.getData().toString()
+        .equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
   }
 
   @Test
   public void authzHappycaseTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestWithAllowedFields).context("AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestWithAllowedFields).context("Test.client2").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
+    assertTrue(result.getData().toString()
+        .equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
   }
 
 
   @Test
   public void authzHappycaseAllFieldsTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("BBB02").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client1").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
+    assertTrue(result.getData().toString().equals(
+        "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
   }
 
   @Test
   public void authzHappycaseAllFieldsWithFragmentsTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestWithFragments).context("BBB02").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestWithFragments).context("Test.client1").build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals("{bookById={id=book-3, name=Interview with the vampire, pageCount=371, author={firstName=Anne, lastName=Rice}, rating={comments=OK, stars=3}}}"));
+    assertTrue(result.getData().toString().equals(
+        "{bookById={id=book-3, name=Interview with the vampire, pageCount=371, author={firstName=Anne, lastName=Rice}, rating={comments=OK, stars=3}}}"));
   }
 
   @Test
@@ -123,7 +121,8 @@ public class AuthorizationTest {
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
+    assertTrue(result.getData().toString().equals(
+        "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
   }
 
 
@@ -133,58 +132,72 @@ public class AuthorizationTest {
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 1);
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=bookById of type=Query"));
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=bookById of type=Query"));
   }
 
 
   @Test
   public void authzMultiScopesTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("CCC03,AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client3,Test.client2")
+        .build();
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(result.getData().toString().equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}, rating={comments=Excellent, stars=5}}}"));
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(result.getData().toString().equals(
+        "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}, rating={comments=Excellent, stars=5}}}"));
   }
 
   @Test
   public void authzWithInvalidFieldTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestWithInvalidFields).context("AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestWithInvalidFields).context("Test.client2").build();
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 1);
     assertNull(result.getData());
-    assertTrue(result.getErrors().get(0).getMessage().contains("Validation error of type FieldUndefined: Field 'userName' in type 'Book' is undefined @ 'bookById/userName'"));
+    assertTrue(result.getErrors().get(0).getMessage().contains(
+        "Validation error of type FieldUndefined: Field 'userName' in type 'Book' is undefined @ 'bookById/userName'"));
   }
 
   @Test
   public void authzWithMutationTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("DDD04").build();
+    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("Test.client4").build();
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 3);
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(result.getErrors().get(2).getMessage().contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
-    assertTrue(result.getData().toString().equals("{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(result.getErrors().get(2).getMessage()
+        .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
+    assertTrue(result.getData().toString().equals(
+        "{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
   }
 
   @Test
   public void authzWithMutationMultiScopesTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("DDD04,AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("Test.client4,Test.client2")
+        .build();
     ExecutionResult result = graphql.execute(executionInput);
-    assertTrue(result.getData().toString().equals("{createNewBookRecord={id=Book-7, name=New World, pageCount=1001, author={firstName=Mickey}}, updateBookRecord={id=book-3}, removeBookRecord={id=book-1}}"));
+    assertTrue(result.getData().toString().equals(
+        "{createNewBookRecord={id=Book-7, name=New World, pageCount=1001, author={firstName=Mickey}}, updateBookRecord={id=book-3}, removeBookRecord={id=book-1}}"));
     assertTrue(result.getErrors().size() == 1);
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-   }
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+  }
 
   @Test
   public void authzWithMutationMultiScopes2Test() {
-    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("CCC03,AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("CCC03,Test.client2").build();
     ExecutionResult result = graphql.execute(executionInput);
     assertTrue(result.getData().toString().equals("{updateBookRecord={id=book-3}}"));
     assertTrue(result.getErrors().size() == 2);
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation"));
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=removeBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation"));
   }
 
   @Test
@@ -192,9 +205,12 @@ public class AuthorizationTest {
     executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("CCC03").build();
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation"));
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
-    assertTrue(result.getErrors().get(2).getMessage().contains("403 - Not authorized to access field=removeBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(2).getMessage()
+        .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation"));
     assertTrue(result.getData().toString().equals("{}"));
   }
 
@@ -204,37 +220,47 @@ public class AuthorizationTest {
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals("{createNewBookRecord={id=Book-7, name=New World, pageCount=1001, author={firstName=Mickey, lastName=Mouse}}, updateBookRecord={id=book-3}, removeBookRecord={id=book-1}}"));
+    assertTrue(result.getData().toString().equals(
+        "{createNewBookRecord={id=Book-7, name=New World, pageCount=1001, author={firstName=Mickey, lastName=Mouse}}, updateBookRecord={id=book-3}, removeBookRecord={id=book-1}}"));
   }
 
   @Test
   public void authzWithMutationAndFragmentsTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(fragmentsInMutationQuery).context("DDD04").build();
+    executionInput = ExecutionInput.newExecutionInput().query(fragmentsInMutationQuery).context("Test.client4").build();
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 3);
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
-    assertTrue(result.getErrors().get(2).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(result.getData().toString().equals("{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
+    assertTrue(result.getErrors().get(2).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(result.getData().toString().equals(
+        "{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
   }
 
   @Test
   public void authzWithMutationNonOauth2Test() {
-    executionInput = ExecutionInput.newExecutionInput().query(fragmentsInMutationQuery).context("Book.test.scope").build();
+    executionInput = ExecutionInput.newExecutionInput().query(fragmentsInMutationQuery).context("Test.client5").build();
     ExecutionResult result = graphql.execute(executionInput);
 
     assertTrue(result.getErrors().size() == 3);
-    assertTrue(result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
-    assertTrue(result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
-    assertTrue(result.getErrors().get(2).getMessage().contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(result.getData().toString().equals("{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=pageCount of type=Book"));
+    assertTrue(result.getErrors().get(2).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(result.getData().toString().equals(
+        "{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
   }
 
 
   @Test
-  public void introspectionWithAAA001() {
-    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).context("AAA01").build();
+  public void introspectionWithTestClient2() {
+    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY)
+        .context("Test.client2").build();
     ExecutionResult result = graphql.execute(executionInput);
     assertTrue(result.getErrors().size() == 0);
 
@@ -266,10 +292,10 @@ public class AuthorizationTest {
   }
 
 
-
   @Test
   public void introspectionWithoutScope() {
-    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).context("").build();
+    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).context("")
+        .build();
     ExecutionResult result = graphql.execute(executionInput);
     assertTrue(result.getErrors().size() == 0);
 
@@ -301,7 +327,8 @@ public class AuthorizationTest {
 
   @Test
   public void introspectionWithMultiScopes() {
-    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).context("DDD04,AAA01").build();
+    executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY)
+        .context("Test.client4,Test.client2").build();
     ExecutionResult result = graphql.execute(executionInput);
     assertTrue(result.getErrors().size() == 0);
 

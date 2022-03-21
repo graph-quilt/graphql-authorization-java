@@ -1,0 +1,9 @@
+query {
+  bookById{
+    id
+    name
+    author{
+      firstName
+    }
+  }
+}
