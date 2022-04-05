@@ -6,11 +6,11 @@ schema {
 type Mutation{
   createNewBookRecord(input: BookInput) : Book
   updateBookRecord(input: BookInput) : Book
-  removeBookRecord(input: BookID) : Book
+  removeBookRecord(input: BookID!) : Book
 }
 
 type Query {
-  bookById(id: ID): Book
+  bookById(id: ID!): Book
 }
 
 type Book {

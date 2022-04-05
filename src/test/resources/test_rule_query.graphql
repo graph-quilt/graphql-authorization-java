@@ -1,0 +1,15 @@
+query {
+  bookById{
+    id
+    name
+    pageCount
+    author {
+      firstName
+      lastName
+    }
+    rating{
+      comments
+      stars
+    }
+  }
+}

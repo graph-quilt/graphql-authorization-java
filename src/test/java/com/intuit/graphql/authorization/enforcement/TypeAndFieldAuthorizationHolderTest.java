@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
+import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLSchema;
@@ -37,8 +38,7 @@ public class TypeAndFieldAuthorizationHolderTest {
   @Before
   public void init() throws IOException {
 
-    URL url = Resources.getResource("testschema.graphqls");
-    String sdl = Resources.toString(url, Charsets.UTF_8);
+    String sdl = TestStaticResources.TEST_SCHEMA;
     schema = HelperBuildTestSchema.buildSchema(sdl);
     authzClientConfiguration = new HelperAuthzClientConfiguration();
     queryType = (GraphQLFieldsContainer) schema.getType("Query");

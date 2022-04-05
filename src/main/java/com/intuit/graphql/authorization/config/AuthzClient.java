@@ -1,6 +1,7 @@
 package com.intuit.graphql.authorization.config;
 
 import lombok.Data;
+import lombok.Getter;
 
 @Data
 public class AuthzClient {
@@ -13,15 +14,11 @@ public class AuthzClient {
     OFFLINE("offline"),
     ONLINE("online");
 
+    @Getter
     private String name;
 
     ClientAuthorizationType(String name) {
       this.name = name;
-    }
-
-    @Override
-    public String getName() {
-      return name;
     }
   }
 }
