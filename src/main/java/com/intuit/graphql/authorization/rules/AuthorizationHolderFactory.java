@@ -16,10 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AuthorizationHolderFactory {
 
-  private final Set<RuleParser> ruleParsers;
+  private final RuleParser ruleParser;
 
-  public AuthorizationHolderFactory(Set<RuleParser> ruleParsers) {
-    this.ruleParsers = Objects.requireNonNull(ruleParsers);
+  public AuthorizationHolderFactory(RuleParser ruleParser) {
+    this.ruleParser = Objects.requireNonNull(ruleParser);
   }
 
   public Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> parse(
@@ -33,15 +33,6 @@ public class AuthorizationHolderFactory {
       String id = authzClient.getId();
 
       Map<GraphQLType, Set<GraphQLFieldDefinition>> intermediateResults = new HashMap<>();
-
-      final RuleParser ruleParser = ruleParsers.stream()
-          .filter(potentialRuleParser -> potentialRuleParser.isRuleTypeSupported(authzClient.getType()))
-          .findFirst()
-          .orElse(null);
-
-      if (ruleParser == null) {
-        continue;
-      }
 
       for (final String query : queries) {
         try {

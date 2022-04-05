@@ -3,33 +3,35 @@ package com.intuit.graphql.authorization.enforcement;
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.intuit.graphql.authorization.config.AuthzClient;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.util.PrincipleFetcher;
+import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
 import graphql.introspection.IntrospectionQuery;
 import graphql.schema.GraphQLSchema;
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-import org.apache.commons.collections4.CollectionUtils;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.apache.commons.collections4.CollectionUtils;
+import org.assertj.core.api.Assertions;
+import org.junit.Before;
+import org.junit.Test;
 
 
 public class AuthorizationTest {
@@ -57,14 +59,26 @@ public class AuthorizationTest {
     mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.txt");
     fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.txt");
 
-    URL url = Resources.getResource("testschema.graphqls");
-    String sdl = Resources.toString(url, Charsets.UTF_8);
+    String sdl = TestStaticResources.TEST_SCHEMA;
     schema = HelperBuildTestSchema.buildSchema(sdl);
 
     authzInstrumentation = new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null);
     GraphQL.Builder builder = GraphQL.newGraphQL(schema);
     builder.instrumentation(authzInstrumentation);
     graphql = builder.build();
+  }
+
+  @Test
+  public void authzWithNoClientConfigurationTest() {
+    final AuthzClientConfiguration authzClientConfiguration = new AuthzClientConfiguration() {
+      @Override
+      public Map<AuthzClient, List<String>> getQueriesByClient() {
+        return new HashMap<>();
+      }
+    };
+    Assertions
+        .assertThatThrownBy(() -> new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null))
+        .isInstanceOf(IllegalArgumentException.class).hasMessage("Clients missing from AuthZClientConfiguration");
   }
 
   @Test
@@ -276,18 +290,18 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 19);
 
-
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Author"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Book"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Query"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Mutation"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("firstName")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author")));
+    assertTrue(CollectionUtils
+        .isEqualCollection(getFields(types, "Book"), Arrays.asList("id", "name", "pageCount", "author")));
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("updateBookRecord")));
   }
 
@@ -310,19 +324,22 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 20);
 
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Rating"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Author"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Book"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Query"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Mutation"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Rating"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id","firstName","lastName")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author","rating")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("createNewBookRecord","updateBookRecord","removeBookRecord")));
+    assertTrue(
+        CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id", "firstName", "lastName")));
+    assertTrue(CollectionUtils
+        .isEqualCollection(getFields(types, "Book"), Arrays.asList("id", "name", "pageCount", "author", "rating")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"),
+        Arrays.asList("createNewBookRecord", "updateBookRecord", "removeBookRecord")));
   }
 
   @Test
@@ -343,26 +360,30 @@ public class AuthorizationTest {
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
     assertTrue(types.size() == 19);
 
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Author"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Book"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Query"));
-    assertTrue(hasValue(types, "kind","OBJECT", "name","Mutation"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookID"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","BookInput"));
-    assertTrue(hasValue(types, "kind","INPUT_OBJECT", "name","AuthorInput"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Author"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Book"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Query"));
+    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Mutation"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
+    assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("firstName")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id","name","pageCount","author")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("createNewBookRecord","updateBookRecord","removeBookRecord")));
+    assertTrue(CollectionUtils
+        .isEqualCollection(getFields(types, "Book"), Arrays.asList("id", "name", "pageCount", "author")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"),
+        Arrays.asList("createNewBookRecord", "updateBookRecord", "removeBookRecord")));
 
   }
 
   public boolean hasValue(JsonArray json, String key, String value, String key1, String value1) {
-    for(int i = 0; i < json.size(); i++) {  // iterate through the JsonArray
+    for (int i = 0; i < json.size(); i++) {  // iterate through the JsonArray
       // first I get the 'i' JsonElement as a JsonObject, then I get the key as a string and I compare it with the value
-      if(json.get(i).getAsJsonObject().get(key).getAsString().equals(value) &&
-          json.get(i).getAsJsonObject().get(key1).getAsString().equals(value1)) return true;
+      if (json.get(i).getAsJsonObject().get(key).getAsString().equals(value) &&
+          json.get(i).getAsJsonObject().get(key1).getAsString().equals(value1)) {
+        return true;
+      }
     }
     return false;
   }

@@ -1,26 +1,25 @@
 package com.intuit.graphql.authorization.rules;
 
-import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
-import com.intuit.graphql.authorization.config.RuleType;
-import graphql.analysis.QueryTraverser;
-import graphql.analysis.QueryVisitorFieldEnvironment;
-import graphql.analysis.QueryVisitorStub;
+import static com.intuit.graphql.authorization.util.GraphQLUtil.isNotEmpty;
+
+import com.intuit.graphql.authorization.util.GraphQLUtil;
 import graphql.language.Document;
+import graphql.language.Field;
+import graphql.language.OperationDefinition;
+import graphql.language.SelectionSet;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
-import java.util.Collections;
+import graphql.schema.GraphQLTypeUtil;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Slf4j
 public class QueryRuleParser implements RuleParser {
@@ -31,55 +30,38 @@ public class QueryRuleParser implements RuleParser {
     this.schema = Objects.requireNonNull(schema);
   }
 
-
-  private Map<GraphQLType, Set<GraphQLFieldDefinition>> getTypesAndFieldsMap(String query) {
-    Document document = new Parser().parseDocument(query);
-
-    Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap = new HashMap<>();
-
-    QueryTraverser queryTraverser = QueryTraverser.newQueryTraverser()
-        .schema(schema)
-        .document(document)
-        .variables(new HashMap<>())
-        .build();
-
-    queryTraverser.visitPreOrder(new QueryVisitorStub() {
-      @Override
-      public void visitField(QueryVisitorFieldEnvironment env) {
-        GraphQLType type = env.getParentType();
-        GraphQLFieldDefinition fieldDefinition = env.getFieldDefinition();
-
-        Set<GraphQLFieldDefinition> fields = typeToFieldMap.computeIfAbsent(type, k -> new HashSet<>());
-        fields.add(fieldDefinition);
-      }
-    });
-
-    return typeToFieldMap;
-  }
-
-  @Override
-  public Map<GraphQLType, Set<GraphQLFieldDefinition>> parseRules(List<String> queries) {
-    try {
-      return queries.stream()
-          .flatMap(query -> parseRule(query).entrySet().stream())
-          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-              (oldSet, newSet) -> Collections.unmodifiableSet(
-                  Stream.concat(oldSet.stream(), newSet.stream())
-                      .collect(Collectors.toSet()))));
-    } catch (Exception e) {
-      log.error("Failed to parse rule " + queries, e);
-      throw e;
+  private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
+      Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap) {
+    if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
+      GraphQLFieldsContainer graphQLFieldsContainer = (GraphQLFieldsContainer) graphQLOutputType;
+      selectionSet.getSelections()
+          .forEach(node -> {
+            if (node instanceof Field) {
+              Field field = (Field) node;
+              final GraphQLFieldDefinition fieldDefinition = graphQLFieldsContainer.getFieldDefinition(field.getName());
+              Set<GraphQLFieldDefinition> fields = typeToFieldMap
+                  .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
+              fields.add(fieldDefinition);
+              preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
+            }
+          });
     }
-
   }
 
   @Override
   public Map<GraphQLType, Set<GraphQLFieldDefinition>> parseRule(final String query) {
-    return getTypesAndFieldsMap(query);
+    Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap = new HashMap<>();
+
+    Document document = new Parser().parseDocument(query);
+    document.getDefinitions()
+        .forEach(definition -> {
+          if (definition instanceof OperationDefinition) {
+            OperationDefinition operationDefinition = (OperationDefinition) definition;
+            GraphQLOutputType operationType = GraphQLUtil.getRootTypeFromOperation(operationDefinition, schema);
+            preOrder(operationType, operationDefinition.getSelectionSet(), typeToFieldMap);
+          }
+        });
+    return typeToFieldMap;
   }
 
-  @Override
-  public boolean isRuleTypeSupported(RuleType type) {
-    return type.equals(ClientAuthorizationType.OFFLINE) ||  type.equals(ClientAuthorizationType.ONLINE);
-  }
 }

@@ -4,13 +4,14 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 
 import graphql.introspection.Introspection;
-import graphql.language.Document;
 import graphql.language.OperationDefinition;
+import graphql.language.SelectionSet;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
 import graphql.schema.GraphQLUnmodifiedType;
+import org.apache.commons.collections4.CollectionUtils;
 
 public class GraphQLUtil {
 
@@ -32,16 +33,9 @@ public class GraphQLUtil {
     }
   }
 
-  //TODO: add empty and NULL protection
-  //TODO: can there be multiple operations?
-  public static OperationDefinition getOperationFromDocument(Document document) {
-    return (OperationDefinition) document.getDefinitions().get(0);
-  }
-
   public static boolean isOperationType(GraphQLType type, GraphQLSchema schema) {
     return type == schema.getQueryType() || type == schema.getMutationType() || type == schema.getSubscriptionType();
   }
-
 
   public static boolean isReservedSchemaType(GraphQLType type) {
     GraphQLUnmodifiedType unwrapped = GraphQLTypeUtil.unwrapAll(type);
@@ -51,6 +45,10 @@ public class GraphQLUtil {
   public static boolean isIntrospection__Type(GraphQLType type) {
     GraphQLType unwrappedType = GraphQLTypeUtil.unwrapAll(type);
     return unwrappedType == Introspection.__Type;
+  }
+
+  public static boolean isNotEmpty(SelectionSet selectionSet) {
+    return selectionSet != null && CollectionUtils.isNotEmpty(selectionSet.getSelections());
   }
 
   public static boolean isListOfIntrospection__Type(GraphQLType type) {

@@ -3,7 +3,6 @@ package com.intuit.graphql.authorization.enforcement;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
-import com.intuit.graphql.authorization.rules.RuleParser;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
 import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import graphql.ExecutionResult;
@@ -21,7 +20,6 @@ import graphql.language.SelectionSet;
 import graphql.schema.DataFetcher;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -47,9 +45,7 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
 
   static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
     QueryRuleParser queryRuleParser = new QueryRuleParser(graphQLSchema);
-    Set<RuleParser> hash_Set = new HashSet<>();
-    hash_Set.add(queryRuleParser);
-    return new AuthorizationHolderFactory(hash_Set);
+    return new AuthorizationHolderFactory(queryRuleParser);
   }
 
   public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,

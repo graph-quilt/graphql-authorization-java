@@ -6,6 +6,7 @@ import static junit.framework.TestCase.assertTrue;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
+import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
@@ -37,8 +38,7 @@ public class AuthZListenerTest {
     requestWithInvalidFragment = HelperUtils.readString("queries/requestWithInvalidFragment.txt");
 
     //Executable Schema
-    URL url = Resources.getResource("testschema.graphqls");
-    String sdl = Resources.toString(url, Charsets.UTF_8);
+    String sdl = TestStaticResources.TEST_SCHEMA;
     GraphQLSchema executableSchema = HelperBuildTestSchema.buildSchema(sdl);
 
     authzListener = new TestAuthZListener();

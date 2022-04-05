@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.intuit.graphql</groupId>
@@ -38,6 +39,8 @@
     <junit5.version>5.5.0</junit5.version>
     <lombok.version>1.16.20</lombok.version>
     <graphql-java.version>17.3</graphql-java.version>
+    <jacoco.enabled>true</jacoco.enabled>
+    <jacoco.version>0.8.4</jacoco.version>
   </properties>
 
   <profiles>
@@ -115,8 +118,49 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <configuration>
+          <footer>2018 Intuit, Inc. Generated ${maven.build.timestamp}</footer>
+          <excludes>
+            <exclude>**/Immutable*.*</exclude>
+          </excludes>
+        </configuration>
+        <executions>
+          <execution>
+            <id>default-prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-report</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-check</id>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules/>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M1</version>
+        <version>3.0.0-M5</version>
+        <configuration>
+          <systemPropertyVariables>
+            <jacoco-agent.destfile>${project.build.directory}/coverage.exec</jacoco-agent.destfile>
+          </systemPropertyVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>
