@@ -15,12 +15,21 @@ import org.junit.Test;
 public class QueryRuleParserTest {
 
   @Test
+  public void testQueryRuleParserUnkownField() {
+    QueryRuleParser queryRuleParser = new QueryRuleParser(
+        HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA));
+
+    Assertions.assertThatThrownBy(() -> queryRuleParser.parseRule("{ author { id }}"))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessage("Unknown field 'author'");
+  }
+
+  @Test
   public void testQueryRuleParser() {
     QueryRuleParser queryRuleParser = new QueryRuleParser(
         HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA));
     final Map<GraphQLType, Set<GraphQLFieldDefinition>> graphQLTypeSetMap = queryRuleParser
         .parseRule(TestStaticResources.TEST_RULE_QUERY);
-    System.out.println(graphQLTypeSetMap.keySet());
 
     Assertions.assertThat(graphQLTypeSetMap).hasSize(4);
 

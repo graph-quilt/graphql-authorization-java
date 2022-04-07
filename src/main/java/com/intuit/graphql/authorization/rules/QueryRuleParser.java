@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QueryRuleParser implements RuleParser {
 
+  private static final String ERR_MSG = "Unknown field '%s'";
+
   private final GraphQLSchema schema;
 
   public QueryRuleParser(GraphQLSchema schema) {
@@ -39,6 +41,9 @@ public class QueryRuleParser implements RuleParser {
             if (node instanceof Field) {
               Field field = (Field) node;
               final GraphQLFieldDefinition fieldDefinition = graphQLFieldsContainer.getFieldDefinition(field.getName());
+              if(fieldDefinition == null){
+                throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
+              }
               Set<GraphQLFieldDefinition> fields = typeToFieldMap
                   .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
               fields.add(fieldDefinition);
