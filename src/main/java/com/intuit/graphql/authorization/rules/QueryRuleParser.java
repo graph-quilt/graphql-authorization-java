@@ -1,6 +1,6 @@
 package com.intuit.graphql.authorization.rules;
 
-import static com.intuit.graphql.authorization.util.GraphQLUtil.isIntrospection_Field;
+import static com.intuit.graphql.authorization.util.GraphQLUtil.getFieldDefinition;
 import static com.intuit.graphql.authorization.util.GraphQLUtil.isNotEmpty;
 
 import com.intuit.graphql.authorization.util.GraphQLUtil;
@@ -41,17 +41,15 @@ public class QueryRuleParser implements RuleParser {
           .forEach(node -> {
             if (node instanceof Field) {
               Field field = (Field) node;
-              if (!isIntrospection_Field(field)) {
-                final GraphQLFieldDefinition fieldDefinition = graphQLFieldsContainer
-                    .getFieldDefinition(field.getName());
-                if (fieldDefinition == null) {
-                  throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
-                }
-                Set<GraphQLFieldDefinition> fields = typeToFieldMap
-                    .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
-                fields.add(fieldDefinition);
-                preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
+              final GraphQLFieldDefinition fieldDefinition = getFieldDefinition(graphQLFieldsContainer,
+                  field.getName());
+              if (fieldDefinition == null) {
+                throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
               }
+              Set<GraphQLFieldDefinition> fields = typeToFieldMap
+                  .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
+              fields.add(fieldDefinition);
+              preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
             }
           });
     }

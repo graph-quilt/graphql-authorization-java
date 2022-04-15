@@ -44,6 +44,7 @@ public class AuthorizationTest {
   private GraphQLSchema schema;
   private GraphQL graphql;
   private String requestAllFields;
+  private String requestAllFieldsWithIntrospection;
   private String requestAllBooks;
   private String requestWithAllowedFields;
   private String requestWithFragments;
@@ -55,6 +56,7 @@ public class AuthorizationTest {
   public void init() {
 
     requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.graphql");
+    requestAllFieldsWithIntrospection = getGraphqlQuery("src/test/resources/queries/requestAllFieldsWithIntrospection.graphql");
     requestAllBooks = getGraphqlQuery("src/test/resources/queries/requestAllBooks.graphql");
     requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.graphql");
     requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.graphql");
@@ -101,6 +103,20 @@ public class AuthorizationTest {
     Assertions
         .assertThatThrownBy(() -> new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null))
         .isInstanceOf(IllegalArgumentException.class).hasMessage("Clients missing from AuthZClientConfiguration");
+  }
+
+  @Test
+  public void authzIntrospectionWithSomeRedactionsTest() {
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllFieldsWithIntrospection).context("Test.client2").build();
+
+    ExecutionResult result = graphql.execute(executionInput);
+
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=lastName of type=Author"));
+    assertTrue(
+        result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
+    assertTrue(result.getData().toString()
+        .equals("{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman}}}"));
   }
 
   @Test

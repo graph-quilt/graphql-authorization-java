@@ -41,22 +41,22 @@ public class QueryRuleParserTest {
 
     final Set<GraphQLFieldDefinition> author = getFromMap(graphQLTypeSetMap, "Author");
     Assertions.assertThat(author)
-        .hasSize(2);
+        .hasSize(3);
     Assertions.assertThat(author)
-        .extracting(f -> f.getName()).containsOnlyOnce("firstName", "lastName");
+        .extracting(f -> f.getName()).containsOnlyOnce("firstName", "lastName","__typename");
 
     final Set<GraphQLFieldDefinition> rating = getFromMap(graphQLTypeSetMap, "Rating");
     Assertions.assertThat(rating)
-        .hasSize(2);
+        .hasSize(3);
     Assertions.assertThat(rating)
-        .extracting(f -> f.getName()).containsOnlyOnce("comments", "stars");
+        .extracting(f -> f.getName()).containsOnlyOnce("comments", "stars","__typename");
 
     final Set<GraphQLFieldDefinition> book = getFromMap(graphQLTypeSetMap, "Book");
     Assertions.assertThat(book)
-        .hasSize(5);
+        .hasSize(6);
 
     Assertions.assertThat(book)
-        .extracting(f -> f.getName()).containsOnlyOnce("name", "id", "author", "rating", "pageCount");
+        .extracting(f -> f.getName()).containsOnlyOnce("name", "id", "author", "rating", "pageCount","__typename");
 
   }
 

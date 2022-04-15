@@ -1,0 +1,18 @@
+{
+    bookById(id: "book-2") {
+        __typename
+        id
+        name
+        pageCount
+        author {
+            __typename
+            firstName
+            lastName
+        }
+        rating {
+            __typename
+            comments
+            stars
+        }
+    }
+}
