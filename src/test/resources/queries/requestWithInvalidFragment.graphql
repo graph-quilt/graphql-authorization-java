@@ -1,0 +1,13 @@
+{
+    bookById(id: "book-3") {
+        id
+        name
+        author {
+            ...nameFragment
+        }
+    }
+}
+fragment nameFragment on Author {
+    firstName
+    lastName
+}

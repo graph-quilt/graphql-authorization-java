@@ -1,1 +1,0 @@
-{bookById(id: "book-3"){id name pageCount author{ ...nameFragment }rating{comments stars }}} fragment nameFragment on Author {firstName lastName}

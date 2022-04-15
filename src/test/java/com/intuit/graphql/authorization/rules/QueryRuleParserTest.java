@@ -35,7 +35,9 @@ public class QueryRuleParserTest {
 
     final Set<GraphQLFieldDefinition> query = getFromMap(graphQLTypeSetMap, "Query");
     Assertions.assertThat(query)
-        .hasSize(1).hasOnlyOneElementSatisfying(f -> f.getName().equals("bookById"));
+        .hasSize(2);
+    Assertions.assertThat(query)
+        .extracting(f -> f.getName()).containsOnlyOnce("bookById", "allBooks");
 
     final Set<GraphQLFieldDefinition> author = getFromMap(graphQLTypeSetMap, "Author");
     Assertions.assertThat(author)

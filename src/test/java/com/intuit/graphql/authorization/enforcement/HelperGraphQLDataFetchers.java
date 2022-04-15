@@ -60,6 +60,10 @@ public class HelperGraphQLDataFetchers {
     };
   }
 
+  public DataFetcher allBooksDataFetcher() {
+    return dataFetchingEnvironment -> books;
+  }
+
   public DataFetcher getAuthorDataFetcher() {
     return dataFetchingEnvironment -> {
       Map<String, String> book = dataFetchingEnvironment.getSource();

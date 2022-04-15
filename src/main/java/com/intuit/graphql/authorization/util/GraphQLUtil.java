@@ -4,6 +4,7 @@ import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
 
 import graphql.introspection.Introspection;
+import graphql.language.Field;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
 import graphql.schema.GraphQLObjectType;
@@ -40,6 +41,10 @@ public class GraphQLUtil {
   public static boolean isReservedSchemaType(GraphQLType type) {
     GraphQLUnmodifiedType unwrapped = GraphQLTypeUtil.unwrapAll(type);
     return unwrapped.getName().startsWith("__");
+  }
+
+  public static boolean isIntrospection_Field(Field field) {
+    return field.getName().startsWith("__");
   }
 
   public static boolean isIntrospection__Type(GraphQLType type) {

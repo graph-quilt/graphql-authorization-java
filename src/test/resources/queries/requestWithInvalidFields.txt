@@ -1,1 +1,0 @@
-{ bookById(id: "book-2"){ id userName pageCount author { firstName } } }

@@ -2,6 +2,7 @@ package com.intuit.graphql.authorization.enforcement;
 
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +44,7 @@ public class AuthorizationTest {
   private GraphQLSchema schema;
   private GraphQL graphql;
   private String requestAllFields;
+  private String requestAllBooks;
   private String requestWithAllowedFields;
   private String requestWithFragments;
   private String requestWithInvalidFields;
@@ -50,14 +52,15 @@ public class AuthorizationTest {
   private String fragmentsInMutationQuery;
 
   @Before
-  public void init() throws IOException {
+  public void init() {
 
-    requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.txt");
-    requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.txt");
-    requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.txt");
-    requestWithInvalidFields = getGraphqlQuery("src/test/resources/queries/requestWithInvalidFields.txt");
-    mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.txt");
-    fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.txt");
+    requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.graphql");
+    requestAllBooks = getGraphqlQuery("src/test/resources/queries/requestAllBooks.graphql");
+    requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.graphql");
+    requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.graphql");
+    requestWithInvalidFields = getGraphqlQuery("src/test/resources/queries/requestWithInvalidFields.graphql");
+    mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.graphql");
+    fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.graphql");
 
     String sdl = TestStaticResources.TEST_SCHEMA;
     schema = HelperBuildTestSchema.buildSchema(sdl);
@@ -66,6 +69,25 @@ public class AuthorizationTest {
     GraphQL.Builder builder = GraphQL.newGraphQL(schema);
     builder.instrumentation(authzInstrumentation);
     graphql = builder.build();
+  }
+
+  @Test
+  public void authzWithSomeRedactionsWithListTest() {
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllBooks).context("Test.client6").build();
+
+    ExecutionResult result = graphql.execute(executionInput);
+
+    final List<String> errors = result.getErrors().stream().map(e -> e.getMessage()).collect(Collectors.toList());
+    assertThat(errors).contains(
+        "403 - Not authorized to access field=lastName of type=Author",
+        "403 - Not authorized to access field=pageCount of type=Book",
+        "403 - Not authorized to access field=rating of type=Book"
+    );
+
+    assertThat(result.getData().toString())
+        .contains("{id=book-2, name=Moby Dick, author={firstName=Herman}}",
+                 "{id=book-3, name=Interview with the vampire, author={firstName=Anne}}"
+        );
   }
 
   @Test
@@ -333,7 +355,7 @@ public class AuthorizationTest {
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById","allBooks")));
     assertTrue(
         CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id", "firstName", "lastName")));
     assertTrue(CollectionUtils

@@ -3,8 +3,6 @@ package com.intuit.graphql.authorization.enforcement;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.ExecutionInput;
@@ -14,7 +12,6 @@ import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionContext;
 import graphql.schema.GraphQLSchema;
 import java.io.IOException;
-import java.net.URL;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,9 +30,9 @@ public class AuthZListenerTest {
   @Before
   public void init() throws IOException {
 
-    requestAllFields = HelperUtils.readString("queries/requestAllFields.txt");
-    requestWithFragments = HelperUtils.readString("queries/requestWithFragments.txt");
-    requestWithInvalidFragment = HelperUtils.readString("queries/requestWithInvalidFragment.txt");
+    requestAllFields = HelperUtils.readString("queries/requestAllFields.graphql");
+    requestWithFragments = HelperUtils.readString("queries/requestWithFragments.graphql");
+    requestWithInvalidFragment = HelperUtils.readString("queries/requestWithInvalidFragment.graphql");
 
     //Executable Schema
     String sdl = TestStaticResources.TEST_SCHEMA;
