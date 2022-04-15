@@ -2,6 +2,7 @@ package com.intuit.graphql.authorization.enforcement;
 
 import static junit.framework.TestCase.assertNull;
 import static junit.framework.TestCase.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,7 +52,7 @@ public class AuthorizationTest {
   private String fragmentsInMutationQuery;
 
   @Before
-  public void init() throws IOException {
+  public void init() {
 
     requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.graphql");
     requestAllBooks = getGraphqlQuery("src/test/resources/queries/requestAllBooks.graphql");
@@ -71,6 +72,25 @@ public class AuthorizationTest {
   }
 
   @Test
+  public void authzWithSomeRedactionsWithListTest() {
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllBooks).context("Test.client6").build();
+
+    ExecutionResult result = graphql.execute(executionInput);
+
+    final List<String> errors = result.getErrors().stream().map(e -> e.getMessage()).collect(Collectors.toList());
+    assertThat(errors).contains(
+        "403 - Not authorized to access field=lastName of type=Author",
+        "403 - Not authorized to access field=pageCount of type=Book",
+        "403 - Not authorized to access field=rating of type=Book"
+    );
+
+    assertThat(result.getData().toString())
+        .contains("{id=book-2, name=Moby Dick, author={firstName=Herman}}",
+                 "{id=book-3, name=Interview with the vampire, author={firstName=Anne}}"
+        );
+  }
+
+  @Test
   public void authzWithNoClientConfigurationTest() {
     final AuthzClientConfiguration authzClientConfiguration = new AuthzClientConfiguration() {
       @Override
@@ -81,27 +101,6 @@ public class AuthorizationTest {
     Assertions
         .assertThatThrownBy(() -> new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null))
         .isInstanceOf(IllegalArgumentException.class).hasMessage("Clients missing from AuthZClientConfiguration");
-  }
-
-  @Test
-  public void authzWithSomeRedactionsWithListTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllBooks).context("Test.client6").build();
-
-    ExecutionResult result = graphql.execute(executionInput);
-
-    final List<String> errors = result.getErrors().stream().map(e -> e.getMessage()).collect(Collectors.toList());
-    Assertions.assertThat(errors).contains(
-        "403 - Not authorized to access field=lastName of type=Author",
-        "403 - Not authorized to access field=pageCount of type=Book",
-        "403 - Not authorized to access field=rating of type=Book"
-    );
-
-    assertTrue(result.getData().toString()
-        .equals(
-            "{allBooks=[{id=book-2, name=Moby Dick, author={firstName=Herman}}, "
-                + "{id=book-3, name=Interview with the vampire, author={firstName=Anne}}, "
-                + "{id=Book-7, name=New World, author={firstName=Mickey}}]}"
-        ));
   }
 
   @Test

@@ -15,7 +15,6 @@ import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeUtil;
-import graphql.schema.GraphQLUnmodifiedType;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,22 +35,22 @@ public class QueryRuleParser implements RuleParser {
 
   private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
       Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap) {
-    final GraphQLUnmodifiedType graphQLUnmodifiedType = GraphQLTypeUtil.unwrapAll(graphQLOutputType);
-    if (graphQLUnmodifiedType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
-      GraphQLFieldsContainer graphQLFieldsContainer = (GraphQLFieldsContainer) graphQLUnmodifiedType;
+    if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
+      GraphQLFieldsContainer graphQLFieldsContainer = (GraphQLFieldsContainer) graphQLOutputType;
       selectionSet.getSelections()
           .forEach(node -> {
             if (node instanceof Field) {
               Field field = (Field) node;
               if (!isIntrospection_Field(field)) {
-                final GraphQLFieldDefinition fieldDefinition = graphQLFieldsContainer.getFieldDefinition(field.getName());
+                final GraphQLFieldDefinition fieldDefinition = graphQLFieldsContainer
+                    .getFieldDefinition(field.getName());
                 if (fieldDefinition == null) {
                   throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
                 }
                 Set<GraphQLFieldDefinition> fields = typeToFieldMap
-                    .computeIfAbsent(graphQLOutputType, k -> new HashSet<>());
+                    .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
                 fields.add(fieldDefinition);
-                preOrder(fieldDefinition.getType(), field.getSelectionSet(), typeToFieldMap);
+                preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
               }
             }
           });
