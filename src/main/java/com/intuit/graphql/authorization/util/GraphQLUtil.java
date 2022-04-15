@@ -2,11 +2,14 @@ package com.intuit.graphql.authorization.util;
 
 import static graphql.Assert.assertNotNull;
 import static graphql.Assert.assertShouldNeverHappen;
+import static graphql.introspection.Introspection.INTROSPECTION_SYSTEM_FIELDS;
 
 import graphql.introspection.Introspection;
 import graphql.language.Field;
 import graphql.language.OperationDefinition;
 import graphql.language.SelectionSet;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
@@ -43,8 +46,11 @@ public class GraphQLUtil {
     return unwrapped.getName().startsWith("__");
   }
 
-  public static boolean isIntrospection_Field(Field field) {
-    return field.getName().startsWith("__");
+  public static GraphQLFieldDefinition getFieldDefinition(GraphQLFieldsContainer graphQLFieldsContainer, String fieldName) {
+    if (Introspection.TypeNameMetaFieldDef.getName().equals(fieldName)) {
+      return Introspection.TypeNameMetaFieldDef;
+    }
+    return graphQLFieldsContainer.getFieldDefinition(fieldName);
   }
 
   public static boolean isIntrospection__Type(GraphQLType type) {
