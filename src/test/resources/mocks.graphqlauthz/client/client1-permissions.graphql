@@ -1,13 +1,16 @@
 query {
-  bookById{
+  bookById {
+    __typename
     id
     name
     pageCount
     author {
+      __typename
       firstName
       lastName
     }
     rating{
+      __typename
       comments
       stars
     }

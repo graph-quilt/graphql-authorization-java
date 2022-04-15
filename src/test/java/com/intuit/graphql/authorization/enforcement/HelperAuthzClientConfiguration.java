@@ -27,6 +27,8 @@ public class HelperAuthzClientConfiguration implements AuthzClientConfiguration 
           .yamlMapper().readValue(HelperUtils.read("mocks.graphqlauthz/client/client4.yml"), AuthzClient.class);
       AuthzClient client5 = HelperUtils
           .yamlMapper().readValue(HelperUtils.read("mocks.graphqlauthz/client/client5-pa.yml"), AuthzClient.class);
+      AuthzClient client6 = HelperUtils
+          .yamlMapper().readValue(HelperUtils.read("mocks.graphqlauthz/client/client6.yml"), AuthzClient.class);
 
       queriesByClient.put(client1, Collections.singletonList(
           HelperUtils.readString("mocks.graphqlauthz/client/client1-permissions.graphql")
@@ -46,6 +48,9 @@ public class HelperAuthzClientConfiguration implements AuthzClientConfiguration 
           HelperUtils.readString("mocks.graphqlauthz/client/client5-permissions-query.graphql"),
           HelperUtils.readString("mocks.graphqlauthz/client/client5-permissions-mutation1.graphql"),
           HelperUtils.readString("mocks.graphqlauthz/client/client5-permissions-mutation2.graphql")
+      ));
+      queriesByClient.put(client6, Arrays.asList(
+          HelperUtils.readString("mocks.graphqlauthz/client/client6-permissions-query.graphql")
       ));
     } catch (IOException e) {
       e.printStackTrace();

@@ -23,6 +23,8 @@ public class HelperBuildTestSchema {
     return RuntimeWiring.newRuntimeWiring()
         .type(newTypeWiring("Query")
             .dataFetcher("bookById", helperGraphQLDataFetchers.getBookByIdDataFetcher()))
+        .type(newTypeWiring("Query")
+            .dataFetcher("allBooks", helperGraphQLDataFetchers.allBooksDataFetcher()))
         .type(newTypeWiring("Book")
             .dataFetcher("author", helperGraphQLDataFetchers.getAuthorDataFetcher()))
         .type(newTypeWiring("Book")

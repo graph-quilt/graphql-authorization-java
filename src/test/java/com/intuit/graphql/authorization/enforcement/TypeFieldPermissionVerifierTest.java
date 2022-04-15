@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
