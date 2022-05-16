@@ -2,15 +2,12 @@ package com.intuit.graphql.authorization.enforcement;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLSchema;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -26,14 +23,13 @@ import org.mockito.junit.MockitoRule;
 
 public class TypeAndFieldAuthorizationHolderTest {
 
-  private AuthorizationHolder authorizationHolder;
-  private AuthzClientConfiguration authzClientConfiguration;
-  private GraphQLSchema schema;
-
   @Rule
   public MockitoRule mockitoRule = MockitoJUnit.rule();
   GraphQLFieldsContainer queryType, bookType;
   GraphQLFieldDefinition bookInfo, authorInfo, ratingInfo;
+  private AuthorizationHolder authorizationHolder;
+  private AuthzClientConfiguration authzClientConfiguration;
+  private GraphQLSchema schema;
 
   @Before
   public void init() throws IOException {

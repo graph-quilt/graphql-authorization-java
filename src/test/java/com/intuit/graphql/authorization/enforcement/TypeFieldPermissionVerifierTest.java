@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import graphql.Scalars;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLType;
+import graphql.schema.GraphQLNamedType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -17,7 +17,7 @@ public class TypeFieldPermissionVerifierTest {
   };
 
   @Mock
-  GraphQLType type;
+  GraphQLNamedType type;
 
   @Mock
   GraphQLFieldDefinition fieldDefinition;

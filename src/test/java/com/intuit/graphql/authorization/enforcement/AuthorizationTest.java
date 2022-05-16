@@ -52,11 +52,22 @@ public class AuthorizationTest {
   private String mutationQuery;
   private String fragmentsInMutationQuery;
 
+  private static String getGraphqlQuery(String filePath) {
+    StringBuilder contentBuilder = new StringBuilder();
+    try (Stream<String> stream = Files.lines(Paths.get(filePath), StandardCharsets.UTF_8)) {
+      stream.forEach(s -> contentBuilder.append(s));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return contentBuilder.toString();
+  }
+
   @Before
   public void init() {
 
     requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.graphql");
-    requestAllFieldsWithIntrospection = getGraphqlQuery("src/test/resources/queries/requestAllFieldsWithIntrospection.graphql");
+    requestAllFieldsWithIntrospection = getGraphqlQuery(
+        "src/test/resources/queries/requestAllFieldsWithIntrospection.graphql");
     requestAllBooks = getGraphqlQuery("src/test/resources/queries/requestAllBooks.graphql");
     requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.graphql");
     requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.graphql");
@@ -88,7 +99,7 @@ public class AuthorizationTest {
 
     assertThat(result.getData().toString())
         .contains("{id=book-2, name=Moby Dick, author={firstName=Herman}}",
-                 "{id=book-3, name=Interview with the vampire, author={firstName=Anne}}"
+            "{id=book-3, name=Interview with the vampire, author={firstName=Anne}}"
         );
   }
 
@@ -107,7 +118,8 @@ public class AuthorizationTest {
 
   @Test
   public void authzIntrospectionWithSomeRedactionsTest() {
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllFieldsWithIntrospection).context("Test.client2").build();
+    executionInput = ExecutionInput.newExecutionInput().query(requestAllFieldsWithIntrospection).context("Test.client2")
+        .build();
 
     ExecutionResult result = graphql.execute(executionInput);
 
@@ -116,7 +128,8 @@ public class AuthorizationTest {
     assertTrue(
         result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
     assertTrue(result.getData().toString()
-        .equals("{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman}}}"));
+        .equals(
+            "{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman}}}"));
   }
 
   @Test
@@ -143,7 +156,6 @@ public class AuthorizationTest {
     assertTrue(result.getData().toString()
         .equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
   }
-
 
   @Test
   public void authzHappycaseAllFieldsTest() {
@@ -177,7 +189,6 @@ public class AuthorizationTest {
         "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
   }
 
-
   @Test
   public void authzWithInvalidScopeTest() {
     executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("INV001").build();
@@ -187,7 +198,6 @@ public class AuthorizationTest {
     assertTrue(
         result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=bookById of type=Query"));
   }
-
 
   @Test
   public void authzMultiScopesTest() {
@@ -308,7 +318,6 @@ public class AuthorizationTest {
         "{createNewBookRecord={id=Book-7, name=New World, author={firstName=Mickey}}, removeBookRecord={id=book-1}}"));
   }
 
-
   @Test
   public void introspectionWithTestClient2() {
     executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY)
@@ -343,7 +352,6 @@ public class AuthorizationTest {
     assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("updateBookRecord")));
   }
 
-
   @Test
   public void introspectionWithoutScope() {
     executionInput = ExecutionInput.newExecutionInput().query(IntrospectionQuery.INTROSPECTION_QUERY).context("")
@@ -371,7 +379,7 @@ public class AuthorizationTest {
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById","allBooks")));
+    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById", "allBooks")));
     assertTrue(
         CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id", "firstName", "lastName")));
     assertTrue(CollectionUtils
@@ -433,16 +441,6 @@ public class AuthorizationTest {
         .flatMap(q -> StreamSupport.stream(q.getAsJsonArray("fields").spliterator(), true)
             .map(f -> f.getAsJsonObject().get("name").getAsString())
         ).collect(Collectors.toSet());
-  }
-
-  private static String getGraphqlQuery(String filePath) {
-    StringBuilder contentBuilder = new StringBuilder();
-    try (Stream<String> stream = Files.lines(Paths.get(filePath), StandardCharsets.UTF_8)) {
-      stream.forEach(s -> contentBuilder.append(s));
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return contentBuilder.toString();
   }
 
 

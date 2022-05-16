@@ -2,9 +2,6 @@ package com.intuit.graphql.authorization.rules;
 
 import com.intuit.graphql.authorization.enforcement.HelperBuildTestSchema;
 import com.intuit.graphql.authorization.util.TestStaticResources;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLFieldsContainer;
-import graphql.schema.GraphQLType;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,45 +25,44 @@ public class QueryRuleParserTest {
   public void testQueryRuleParser() {
     QueryRuleParser queryRuleParser = new QueryRuleParser(
         HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA));
-    final Map<GraphQLType, Set<GraphQLFieldDefinition>> graphQLTypeSetMap = queryRuleParser
+    final Map<String, Set<String>> graphQLTypeSetMap = queryRuleParser
         .parseRule(TestStaticResources.TEST_RULE_QUERY);
 
     Assertions.assertThat(graphQLTypeSetMap).hasSize(4);
 
-    final Set<GraphQLFieldDefinition> query = getFromMap(graphQLTypeSetMap, "Query");
+    final Set<String> query = getFromMap(graphQLTypeSetMap, "Query");
     Assertions.assertThat(query)
         .hasSize(2);
-    Assertions.assertThat(query)
-        .extracting(f -> f.getName()).containsOnlyOnce("bookById", "allBooks");
+    Assertions.assertThat(query).containsOnlyOnce("bookById", "allBooks");
 
-    final Set<GraphQLFieldDefinition> author = getFromMap(graphQLTypeSetMap, "Author");
+    final Set<String> author = getFromMap(graphQLTypeSetMap, "Author");
     Assertions.assertThat(author)
         .hasSize(3);
     Assertions.assertThat(author)
-        .extracting(f -> f.getName()).containsOnlyOnce("firstName", "lastName","__typename");
+        .containsOnlyOnce("firstName", "lastName", "__typename");
 
-    final Set<GraphQLFieldDefinition> rating = getFromMap(graphQLTypeSetMap, "Rating");
+    final Set<String> rating = getFromMap(graphQLTypeSetMap, "Rating");
     Assertions.assertThat(rating)
         .hasSize(3);
     Assertions.assertThat(rating)
-        .extracting(f -> f.getName()).containsOnlyOnce("comments", "stars","__typename");
+        .containsOnlyOnce("comments", "stars", "__typename");
 
-    final Set<GraphQLFieldDefinition> book = getFromMap(graphQLTypeSetMap, "Book");
+    final Set<String> book = getFromMap(graphQLTypeSetMap, "Book");
     Assertions.assertThat(book)
         .hasSize(6);
 
     Assertions.assertThat(book)
-        .extracting(f -> f.getName()).containsOnlyOnce("name", "id", "author", "rating", "pageCount","__typename");
+        .containsOnlyOnce("name", "id", "author", "rating", "pageCount", "__typename");
 
   }
 
-  private Set<GraphQLFieldDefinition> getFromMap(Map<GraphQLType, Set<GraphQLFieldDefinition>> graphQLTypeSetMap,
+  private Set<String> getFromMap(Map<String, Set<String>> graphQLTypeSetMap,
       String name) {
 
-    for (Entry<GraphQLType, Set<GraphQLFieldDefinition>> entry : graphQLTypeSetMap.entrySet()) {
-      GraphQLType key = entry.getKey();
-      Set<GraphQLFieldDefinition> value = entry.getValue();
-      if (((GraphQLFieldsContainer) key).getName().equals(name)) {
+    for (Entry<String, Set<String>> entry : graphQLTypeSetMap.entrySet()) {
+      String key = entry.getKey();
+      Set<String> value = entry.getValue();
+      if (key.equals(name)) {
         return value;
       }
     }

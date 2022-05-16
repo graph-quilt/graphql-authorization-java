@@ -6,9 +6,6 @@ import java.io.IOException;
 
 public class TestStaticResources {
 
-  private TestStaticResources() {
-  }
-
   public static String TEST_SCHEMA = "";
   public static String TEST_RULE_QUERY = "";
 
@@ -19,6 +16,9 @@ public class TestStaticResources {
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private TestStaticResources() {
   }
 
 }

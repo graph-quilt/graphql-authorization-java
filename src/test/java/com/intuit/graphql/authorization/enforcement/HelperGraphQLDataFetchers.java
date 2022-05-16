@@ -29,13 +29,13 @@ public class HelperGraphQLDataFetchers {
       Arrays.asList(ImmutableMap.of("id", "author-1",
           "firstName", "Joanne",
           "lastName", "Rowling"),
-      ImmutableMap.of("id", "author-2",
-          "firstName", "Herman",
-          "lastName", "Melville"),
-      ImmutableMap.of("id", "author-3",
-          "firstName", "Anne",
-          "lastName", "Rice")
-  ));
+          ImmutableMap.of("id", "author-2",
+              "firstName", "Herman",
+              "lastName", "Melville"),
+          ImmutableMap.of("id", "author-3",
+              "firstName", "Anne",
+              "lastName", "Rice")
+      ));
 
   private static List<Map<String, String>> ratings = Arrays.asList(
       ImmutableMap.of("id", "book-1",
@@ -97,11 +97,11 @@ public class HelperGraphQLDataFetchers {
       books.add(ImmutableMap.of("id", bookId,
           "name", bookInput.get("name").toString(),
           "pageCount", bookInput.get("pageCount").toString(),
-          "authorId",authorInfo.get("id").toString()));
+          "authorId", authorInfo.get("id").toString()));
 
       authors.add(ImmutableMap.of("id", authorInfo.get("id").toString(),
-          "firstName",authorInfo.get("firstName").toString(),
-          "lastName",authorInfo.get("lastName").toString()));
+          "firstName", authorInfo.get("firstName").toString(),
+          "lastName", authorInfo.get("lastName").toString()));
 
       return books
           .stream()

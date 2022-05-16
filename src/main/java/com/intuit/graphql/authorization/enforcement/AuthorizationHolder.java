@@ -1,22 +1,20 @@
 package com.intuit.graphql.authorization.enforcement;
 
-import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.GraphQLType;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.apache.commons.collections4.SetUtils;
 
 
 public class AuthorizationHolder {
 
-  private final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> scopeToTypeMap;
+  private final Map<String, Map<String, Set<String>>> scopeToTypeMap;
 
-  public AuthorizationHolder(Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> scopeToType) {
+  public AuthorizationHolder(Map<String, Map<String, Set<String>>> scopeToType) {
     this.scopeToTypeMap = Collections.unmodifiableMap(scopeToType);
   }
 
@@ -30,9 +28,8 @@ public class AuthorizationHolder {
                 .filter(Objects::nonNull)
                 .flatMap(map -> map.entrySet().stream())
                 .collect(Collectors.toMap(Entry::getKey, Entry::getValue,
-                    (oldSet, newSet) -> Collections.unmodifiableSet(
-                        Stream.concat(oldSet.stream(), newSet.stream())
-                            .collect(Collectors.toSet()))))));
+                    (oldSet, newSet) -> SetUtils.union(oldSet, newSet)
+                ))));
   }
 
 }

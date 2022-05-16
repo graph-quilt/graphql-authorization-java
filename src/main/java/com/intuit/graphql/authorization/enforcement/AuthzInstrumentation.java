@@ -43,11 +43,6 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   private AuthzListener authzListener = DEFAULT_AUTHZ_LISTENER;
 
 
-  static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
-    QueryRuleParser queryRuleParser = new QueryRuleParser(graphQLSchema);
-    return new AuthorizationHolderFactory(queryRuleParser);
-  }
-
   public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,
       PrincipleFetcher principleFetcher, AuthzListener authzListener) {
     if (configuration.getQueriesByClient().isEmpty()) {
@@ -58,6 +53,11 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         getAuthorizationFactory(schema).parse(configuration.getQueriesByClient()));
     this.principleFetcher = principleFetcher;
     this.authzListener = (Objects.nonNull(authzListener)) ? authzListener : DEFAULT_AUTHZ_LISTENER;
+  }
+
+  static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
+    QueryRuleParser queryRuleParser = new QueryRuleParser(graphQLSchema);
+    return new AuthorizationHolderFactory(queryRuleParser);
   }
 
   @Override
@@ -174,11 +174,11 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   @RequiredArgsConstructor
   static class AuthzInstrumentationState implements InstrumentationState {
 
-    private List<GraphQLError> authzErrors = new LinkedList<>();
     private final TypeFieldPermissionVerifier typeFieldPermissionVerifier;
     private final GraphQLSchema graphQLSchema;
     private final Set<String> scopes;
     private final boolean enforce;
+    private List<GraphQLError> authzErrors = new LinkedList<>();
   }
 
 }

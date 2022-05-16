@@ -1,12 +1,12 @@
 package com.intuit.graphql.authorization.enforcement;
 
+import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
+
 import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
-
-import static graphql.schema.idl.TypeRuntimeWiring.newTypeWiring;
 
 public class HelperBuildTestSchema {
 

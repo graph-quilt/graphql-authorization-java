@@ -1,8 +1,6 @@
 package com.intuit.graphql.authorization.rules;
 
 import com.intuit.graphql.authorization.config.AuthzClient;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLType;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,21 +20,21 @@ public class AuthorizationHolderFactory {
     this.ruleParser = Objects.requireNonNull(ruleParser);
   }
 
-  public Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> parse(
+  public Map<String, Map<String, Set<String>>> parse(
       Map<AuthzClient, List<String>> graphqlRulesByClient
   ) {
-    Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> scopeToTypeMap = new HashMap<>();
+    Map<String, Map<String, Set<String>>> scopeToTypeMap = new HashMap<>();
 
     for (Entry<AuthzClient, List<String>> entry : graphqlRulesByClient.entrySet()) {
       AuthzClient authzClient = entry.getKey();
       List<String> queries = entry.getValue();
       String id = authzClient.getId();
 
-      Map<GraphQLType, Set<GraphQLFieldDefinition>> intermediateResults = new HashMap<>();
+      Map<String, Set<String>> intermediateResults = new HashMap<>();
 
       for (final String query : queries) {
         try {
-          Map<GraphQLType, Set<GraphQLFieldDefinition>> ruleSetMap = ruleParser.parseRule(query);
+          Map<String, Set<String>> ruleSetMap = ruleParser.parseRule(query);
           ruleSetMap.forEach((type, fields) -> intermediateResults.merge(type, fields, (oldSet, newSet) -> {
             oldSet.addAll(newSet);
             return oldSet;

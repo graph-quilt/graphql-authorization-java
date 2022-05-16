@@ -7,6 +7,7 @@ import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLFieldsContainer;
+import graphql.schema.GraphQLNamedType;
 import graphql.schema.GraphQLType;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ class IntrospectionRedactingDataFetcher implements DataFetcher {
     if (delegatedGetResult != null) {
       if (GraphQLUtil.isListOfIntrospection__Type(environment.getFieldType())) {
         //would be nice if there were no type erasure for generics
-        return redactTypeList((List<GraphQLType>) delegatedGetResult);
+        return redactTypeList((List<GraphQLNamedType>) delegatedGetResult);
       }
 
       //used for introspection of fields
@@ -54,7 +55,7 @@ class IntrospectionRedactingDataFetcher implements DataFetcher {
         .collect(Collectors.toList());
   }
 
-  private List<GraphQLType> redactTypeList(List<GraphQLType> fields) {
+  private List<GraphQLType> redactTypeList(List<GraphQLNamedType> fields) {
     return fields.stream()
         .filter(type -> state.getTypeFieldPermissionVerifier().isPermitted(type))
         .collect(Collectors.toList());
