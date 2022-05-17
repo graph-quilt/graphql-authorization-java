@@ -40,6 +40,7 @@
     <graphql-java.version>17.3</graphql-java.version>
     <jacoco.enabled>true</jacoco.enabled>
     <jacoco.version>0.8.4</jacoco.version>
+    <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
   </properties>
 
   <profiles>
@@ -48,9 +49,8 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
+            <version>${maven-gpg-plugin.version}</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
