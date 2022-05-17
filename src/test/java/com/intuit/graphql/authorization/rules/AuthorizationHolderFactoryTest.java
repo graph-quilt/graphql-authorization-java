@@ -9,8 +9,6 @@ import static org.mockito.Mockito.when;
 
 import com.intuit.graphql.authorization.config.AuthzClient;
 import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
-import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLType;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,7 +36,7 @@ public class AuthorizationHolderFactoryTest {
 
     queriesByClient.put(client, Collections.singletonList("test-query"));
 
-    final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> result = factory
+    final Map<String, Map<String, Set<String>>> result = factory
         .parse(queriesByClient);
     assertThat(result).isEmpty();
   }
@@ -47,12 +45,12 @@ public class AuthorizationHolderFactoryTest {
   public void mergesMultipleRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();
-    allowedTypesAndFields.put(mock(GraphQLType.class), Collections.emptySet());
+    Map<String, Set<String>> allowedTypesAndFields = new HashMap<>();
+    allowedTypesAndFields.put("type1", Collections.emptySet());
 
-    Map<GraphQLType, Set<GraphQLFieldDefinition>> secondTypesAndFields = new HashMap<>();
+    Map<String, Set<String>> secondTypesAndFields = new HashMap<>();
 
-    secondTypesAndFields.put(mock(GraphQLType.class), Collections.emptySet());
+    secondTypesAndFields.put("type2", Collections.emptySet());
 
     when(mockRuleParser.parseRule(any()))
         .thenReturn(allowedTypesAndFields)
@@ -68,22 +66,22 @@ public class AuthorizationHolderFactoryTest {
     List<String> queries = Arrays.asList("test-query", "second-query");
     queriesByClient.put(client, queries);
 
-    final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> result = factory.parse(queriesByClient);
+    final Map<String, Map<String, Set<String>>> result = factory.parse(queriesByClient);
 
     assertThat(result.get("test-id")).hasSize(2);
   }
 
   @Test
   public void noRuleParsers() {
-    assertThatThrownBy(()->new AuthorizationHolderFactory(null)).isInstanceOf(NullPointerException.class);
+    assertThatThrownBy(() -> new AuthorizationHolderFactory(null)).isInstanceOf(NullPointerException.class);
   }
 
   @Test
   public void returnsTypeMapForValidRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
-    Map<GraphQLType, Set<GraphQLFieldDefinition>> allowedTypesAndFields = new HashMap<>();
-    allowedTypesAndFields.put(mock(GraphQLType.class), Collections.emptySet());
+    Map<String, Set<String>> allowedTypesAndFields = new HashMap<>();
+    allowedTypesAndFields.put("type", Collections.emptySet());
 
     when(mockRuleParser.parseRule(any()))
         .thenReturn(allowedTypesAndFields);
@@ -98,7 +96,7 @@ public class AuthorizationHolderFactoryTest {
     List<String> queries = Collections.singletonList("test-query");
     queriesByClient.put(client, queries);
 
-    final Map<String, Map<GraphQLType, Set<GraphQLFieldDefinition>>> result = factory.parse(queriesByClient);
+    final Map<String, Map<String, Set<String>>> result = factory.parse(queriesByClient);
 
     assertThat(result).isNotEmpty();
   }

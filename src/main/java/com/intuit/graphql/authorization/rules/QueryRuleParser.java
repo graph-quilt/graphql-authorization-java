@@ -34,7 +34,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
-      Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap) {
+      Map<String, Set<String>> typeToFieldMap) {
     if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
       GraphQLFieldsContainer graphQLFieldsContainer = (GraphQLFieldsContainer) graphQLOutputType;
       selectionSet.getSelections()
@@ -46,9 +46,9 @@ public class QueryRuleParser implements RuleParser {
               if (fieldDefinition == null) {
                 throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
               }
-              Set<GraphQLFieldDefinition> fields = typeToFieldMap
-                  .computeIfAbsent(graphQLFieldsContainer, k -> new HashSet<>());
-              fields.add(fieldDefinition);
+              Set<String> fields = typeToFieldMap
+                  .computeIfAbsent(graphQLFieldsContainer.getName(), k -> new HashSet<>());
+              fields.add(fieldDefinition.getName());
               preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
             }
           });
@@ -56,8 +56,8 @@ public class QueryRuleParser implements RuleParser {
   }
 
   @Override
-  public Map<GraphQLType, Set<GraphQLFieldDefinition>> parseRule(final String query) {
-    Map<GraphQLType, Set<GraphQLFieldDefinition>> typeToFieldMap = new HashMap<>();
+  public Map<String, Set<String>> parseRule(final String query) {
+    Map<String, Set<String>> typeToFieldMap = new HashMap<>();
     Document document = new Parser().parseDocument(query);
     document.getDefinitions()
         .forEach(definition -> {
