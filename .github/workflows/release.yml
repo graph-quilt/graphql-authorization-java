@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Will start a Maven Central upload with version ${{ github.event.inputs.releaseversion }}"
+
       - uses: actions/checkout@v2
-        -
+
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v1
         with:
@@ -27,6 +28,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
+
 #      - name: Set projects Maven version to GitHub Action GUI set version
 #        run: mvn versions:set "-DnewVersion=${{ github.event.inputs.releaseversion }}"
 
