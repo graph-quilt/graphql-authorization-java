@@ -11,9 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Will start a Maven Central upload with version ${{ github.event.inputs.releaseversion }}"
-
       - uses: actions/checkout@v2
-
+        -
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v1
         with:
@@ -24,11 +23,15 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
+      - name: Configure Git User
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
 #      - name: Set projects Maven version to GitHub Action GUI set version
 #        run: mvn versions:set "-DnewVersion=${{ github.event.inputs.releaseversion }}"
 
       - name: Publish package
-        run: mvn --batch-mode release:clean release:prepare release:perform -P release -DskipTests=true
+        run: mvn --batch-mode release:prepare release:perform -P release -DskipTests=true
         env:
           MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
