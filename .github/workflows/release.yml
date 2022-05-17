@@ -4,13 +4,13 @@ on:
     inputs:
       releaseversion:
         description: 'Release version'
-        required: true
+        required: false
         default: '2.4.0'
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "Will start a Maven Central upload with version ${{ github.event.inputs.releaseversion }}"
+      - run: echo "Will release to central maven"
 
       - uses: actions/checkout@v2
 
