@@ -1,11 +1,9 @@
 query {
   bookById{
-    __typename
     id
     name
     pageCount
     author {
-      __typename
       firstName
     }
   }
