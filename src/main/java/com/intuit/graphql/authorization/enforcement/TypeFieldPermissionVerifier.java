@@ -10,6 +10,8 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.SetUtils;
 
 public class TypeFieldPermissionVerifier implements PermissionVerifier {
 
@@ -24,36 +26,31 @@ public class TypeFieldPermissionVerifier implements PermissionVerifier {
 
   @Override
   public boolean isPermitted(GraphQLNamedType graphQLType) {
-    //input types are permitted
-    if (GraphQLTypeUtil.isInput(graphQLType)) {
-      return true;
-    }
-    //operation itself is permitted
-//    if (GraphQLUtil.isOperationType(graphQLType, schema)) {
-//      return true;
-//    }
-    //check if this is a schema type - they are permitted
-    if (GraphQLUtil.isReservedSchemaType(graphQLType)) {
-      return true;
-    }
-    return typeToFieldsMap.containsKey(graphQLType.getName());
+    return isTypeSpecial(graphQLType) || typeToFieldsMap.containsKey(graphQLType.getName());
   }
 
   @Override
   public boolean isPermitted(GraphQLNamedType parentType, GraphQLFieldDefinition fieldDefinition) {
-    if (GraphQLUtil.isReservedSchemaType(parentType)) {
-      return true;
-    }
-    if (GraphQLTypeUtil.isInput(parentType)) {
+    if (isTypeSpecial(parentType)) {
       return true;
     }
     final GraphQLNamedType type = unwrapAll(fieldDefinition.getType());
     if (parentType == schema.getQueryType() && type == Introspection.__Schema) {
       return true;
     }
-    Set<String> fields = typeToFieldsMap.get(parentType.getName());
-    boolean fieldAllowed = fields != null && fields.contains(fieldDefinition.getName());
-    boolean typeAllowed = isPermitted(type);
-    return fieldAllowed && typeAllowed;
+    Set<String> fields = typeToFieldsMap.getOrDefault(parentType.getName(), SetUtils.emptySet());
+    //allow __typename, if at least one field is allowed.
+    if (fieldDefinition == Introspection.TypeNameMetaFieldDef) {
+      return CollectionUtils.isNotEmpty(fields);
+    }
+    return fields.contains(fieldDefinition.getName());
+  }
+
+  private boolean isTypeSpecial(GraphQLNamedType parentType) {
+    //input types are permitted
+    //schema types are permitted
+    return GraphQLUtil.isReservedSchemaType(parentType) || GraphQLTypeUtil.isInput(parentType);
   }
 }
+
+

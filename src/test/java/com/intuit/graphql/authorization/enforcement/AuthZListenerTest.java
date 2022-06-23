@@ -60,7 +60,7 @@ public class AuthZListenerTest {
     assertTrue(
         result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
     assertTrue(result.getData().toString()
-        .equals("{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman}}}"));
+        .equals("{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman}}}"));
 
     assertEquals(authzListener.countOnFieldRedaction, 2);
     assertEquals(authzListener.countOnEnforcement, 1);
@@ -78,7 +78,7 @@ public class AuthZListenerTest {
     assertTrue(result.getErrors().size() == 0);
 
     assertTrue(result.getData().toString().equals(
-        "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
+        "{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman, lastName=Melville}, rating={__typename=Rating, comments=Excellent, stars=5}}}"));
     assertEquals(authzListener.countOnFieldRedaction, 0);
     assertEquals(authzListener.countOnEnforcement, 1);
     assertEquals(authzListener.countOnCreatingState, 1);
@@ -123,7 +123,7 @@ public class AuthZListenerTest {
 
     assertTrue(result.getErrors().size() == 0);
     assertTrue(result.getData().toString().equals(
-        "{bookById={id=book-2, name=Moby Dick, pageCount=635, author={firstName=Herman, lastName=Melville}, rating={comments=Excellent, stars=5}}}"));
+        "{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman, lastName=Melville}, rating={__typename=Rating, comments=Excellent, stars=5}}}"));
     assertEquals(authzListener.countOnEnforcement, 1);
     assertEquals(authzListener.countOnCreatingState, 1);
     assertEquals(authzListener.countOnFieldRedaction, 0);
