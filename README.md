@@ -64,7 +64,7 @@ builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSche
 </dependency>
 ```
 
-See the [release tab](https://github.com/graphql-authorization/releases) for
+See the [release tab](https://github.com/graphql-authorization-java/releases) for
 the latest information on releases.
 
 
