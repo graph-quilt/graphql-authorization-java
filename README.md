@@ -11,9 +11,9 @@ This library responsible for enforcing access control for schema types and field
 -----
 
 
-[Builds](https://app.circleci.com/pipelines/github/intuit/graphql-authorization-java)    
+[Builds](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)    
 
-[![CircleCI](https://circleci.com/gh/intuit/graphql-authorization-java/tree/master.svg?style=shield)](https://app.circleci.com/pipelines/github/intuit/graphql-authorization-java)
+[![CircleCI](https://circleci.com/gh/graph-quilt/graphql-authorization-java/tree/master.svg?style=shield)](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)
 
 ### Description
 
@@ -64,7 +64,7 @@ builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSche
 </dependency>
 ```
 
-See the [release tab](https://github.com/intuit/graphql-authorization-java/releases) for
+See the [release tab](https://github.com/graph-quilt/graphql-authorization-java/releases) for
 the latest information on releases.
 
 
