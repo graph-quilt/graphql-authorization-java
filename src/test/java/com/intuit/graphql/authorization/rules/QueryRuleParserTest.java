@@ -1,30 +1,48 @@
 package com.intuit.graphql.authorization.rules;
 
+import static com.intuit.graphql.authorization.rules.QueryRuleParserErrors.UNKNOWN_FIELD;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import com.intuit.graphql.authorization.enforcement.AuthzListener;
 import com.intuit.graphql.authorization.enforcement.HelperBuildTestSchema;
 import com.intuit.graphql.authorization.util.TestStaticResources;
+import graphql.language.Field;
+import graphql.schema.GraphQLFieldsContainer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class QueryRuleParserTest {
 
-  @Test
-  public void testQueryRuleParserUnkownField() {
-    QueryRuleParser queryRuleParser = new QueryRuleParser(
-        HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA));
+  @Mock
+  private AuthzListener authzListenerMock;
 
-    Assertions.assertThatThrownBy(() -> queryRuleParser.parseRule("{ author { id }}"))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessage("Unknown field 'author'");
+  @Test
+  public void testQueryRuleParserUnknownField() {
+    QueryRuleParser queryRuleParser = new QueryRuleParser(
+        HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA), authzListenerMock);
+
+    final Map<String, Set<String>> graphQLTypeSetMap = queryRuleParser.parseRule("{ author { id }}");
+
+    Assertions.assertThat(graphQLTypeSetMap).hasSize(0);
+    verify(authzListenerMock, times(1)).onQueryParsingError(eq(UNKNOWN_FIELD), any(GraphQLFieldsContainer.class), any(
+        Field.class));
   }
 
   @Test
   public void testQueryRuleParser() {
     QueryRuleParser queryRuleParser = new QueryRuleParser(
-        HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA));
+        HelperBuildTestSchema.buildSchema(TestStaticResources.TEST_SCHEMA), authzListenerMock);
     final Map<String, Set<String>> graphQLTypeSetMap = queryRuleParser
         .parseRule(TestStaticResources.TEST_RULE_QUERY);
 

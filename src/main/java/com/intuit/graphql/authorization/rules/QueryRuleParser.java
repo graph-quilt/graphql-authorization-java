@@ -1,8 +1,10 @@
 package com.intuit.graphql.authorization.rules;
 
+import static com.intuit.graphql.authorization.rules.QueryRuleParserErrors.UNKNOWN_FIELD;
 import static com.intuit.graphql.authorization.util.GraphQLUtil.getFieldDefinition;
 import static com.intuit.graphql.authorization.util.GraphQLUtil.isNotEmpty;
 
+import com.intuit.graphql.authorization.enforcement.AuthzListener;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
 import graphql.language.Document;
 import graphql.language.Field;
@@ -29,27 +31,32 @@ public class QueryRuleParser implements RuleParser {
 
   private final GraphQLSchema schema;
 
-  public QueryRuleParser(GraphQLSchema schema) {
+  private AuthzListener authzListener;
+
+  public QueryRuleParser(GraphQLSchema schema, AuthzListener authzListener) {
     this.schema = Objects.requireNonNull(schema);
+    this.authzListener = authzListener;
   }
 
   private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
       Map<String, Set<String>> typeToFieldMap) {
     if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
-      GraphQLFieldsContainer graphQLFieldsContainer = (GraphQLFieldsContainer) graphQLOutputType;
+      GraphQLFieldsContainer parentType = (GraphQLFieldsContainer) graphQLOutputType;
       selectionSet.getSelections()
           .forEach(node -> {
             if (node instanceof Field) {
               Field field = (Field) node;
-              final GraphQLFieldDefinition fieldDefinition = getFieldDefinition(graphQLFieldsContainer,
+              final GraphQLFieldDefinition fieldDefinition = getFieldDefinition(parentType,
                   field.getName());
               if (fieldDefinition == null) {
-                throw new IllegalStateException(String.format(ERR_MSG, field.getName()));
+                authzListener.onQueryParsingError(UNKNOWN_FIELD, parentType, field);
+              } else {
+                Set<String> fields = typeToFieldMap
+                    .computeIfAbsent(parentType.getName(), k -> new HashSet<>());
+                fields.add(fieldDefinition.getName());
+                preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()),
+                    field.getSelectionSet(), typeToFieldMap);
               }
-              Set<String> fields = typeToFieldMap
-                  .computeIfAbsent(graphQLFieldsContainer.getName(), k -> new HashSet<>());
-              fields.add(fieldDefinition.getName());
-              preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()), field.getSelectionSet(), typeToFieldMap);
             }
           });
     }
