@@ -1,8 +1,7 @@
 package com.intuit.graphql.authorization.rules;
 
-import static com.intuit.graphql.authorization.util.JsonUtil.toJson;
-
 import com.intuit.graphql.authorization.config.AuthzClient;
+import com.intuit.graphql.authorization.util.FieldCoordinatesFormattingUtil;
 import graphql.schema.FieldCoordinates;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,14 +34,11 @@ public class AuthorizationHolderFactory {
 
       Map<String, Set<String>> intermediateResults = new HashMap<>();
 
+      InvalidFieldsCollector invalidFieldsCollector = new InvalidFieldsCollector();
+
       for (final String query : queries) {
         try {
-          InvalidFieldsCollector invalidFieldsCollector = new InvalidFieldsCollector();
           Map<String, Set<String>> ruleSetMap = ruleParser.parseRule(query, invalidFieldsCollector);
-          if (invalidFieldsCollector.hasInvalidFields()) {
-            Set<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
-            log.error(String.format("Failed to parse rule. Some fields in the rule were not valid.  client=%s, invalidFields=%s",id, toJson(invalidFields)));
-          }
           ruleSetMap.forEach((type, fields) -> intermediateResults.merge(type, fields, (oldSet, newSet) -> {
             oldSet.addAll(newSet);
             return oldSet;
@@ -50,6 +46,12 @@ public class AuthorizationHolderFactory {
         } catch (Exception e) {
           log.error("Failed to parse rule for scope " + id, e);
         }
+      }
+
+      if (invalidFieldsCollector.hasInvalidFields()) {
+        Set<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
+        log.error(String.format("Invalid fields found in query rule.  clientId=%s, invalidFields=%s",
+          id, FieldCoordinatesFormattingUtil.toString(invalidFields)));
       }
 
       if (!intermediateResults.isEmpty()) {
