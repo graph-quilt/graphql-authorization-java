@@ -3,7 +3,7 @@ package com.intuit.graphql.authorization.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import graphql.schema.FieldCoordinates;
-import java.util.List;
+import java.util.Set;
 
 public class JsonUtil {
 
@@ -12,7 +12,7 @@ public class JsonUtil {
   private JsonUtil() {
   }
 
-  public static String toJson(List<FieldCoordinates> invalidFields) throws JsonProcessingException {
+  public static String toJson(Set<FieldCoordinates> invalidFields) throws JsonProcessingException {
     return objectMapper.writeValueAsString(invalidFields);
   }
 

@@ -3,13 +3,13 @@ package com.intuit.graphql.authorization.rules;
 import graphql.language.Field;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLFieldsContainer;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 
 public class InvalidFieldsCollector implements RuleParserListener {
 
-  private final List<FieldCoordinates> invalidField = new ArrayList<>();
+  private final Set<FieldCoordinates> invalidField = new HashSet<>();
 
   @Override
   public void onQueryParsingError(GraphQLFieldsContainer parentType, Field field) {
@@ -20,7 +20,7 @@ public class InvalidFieldsCollector implements RuleParserListener {
     return CollectionUtils.isNotEmpty(invalidField);
   }
 
-  public List<FieldCoordinates> getInvalidFields() {
+  public Set<FieldCoordinates> getInvalidFields() {
     return this.invalidField;
   }
 }

@@ -40,7 +40,7 @@ public class AuthorizationHolderFactory {
           InvalidFieldsCollector invalidFieldsCollector = new InvalidFieldsCollector();
           Map<String, Set<String>> ruleSetMap = ruleParser.parseRule(query, invalidFieldsCollector);
           if (invalidFieldsCollector.hasInvalidFields()) {
-            List<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
+            Set<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
             log.error(String.format("Failed to parse rule. Some fields in the rule were not valid.  client=%s, invalidFields=%s",id, toJson(invalidFields)));
           }
           ruleSetMap.forEach((type, fields) -> intermediateResults.merge(type, fields, (oldSet, newSet) -> {
