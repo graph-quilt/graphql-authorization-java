@@ -1,6 +1,9 @@
 package com.intuit.graphql.authorization.rules;
 
+import static com.intuit.graphql.authorization.util.JsonUtil.toJson;
+
 import com.intuit.graphql.authorization.config.AuthzClient;
+import graphql.schema.FieldCoordinates;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +37,12 @@ public class AuthorizationHolderFactory {
 
       for (final String query : queries) {
         try {
-          Map<String, Set<String>> ruleSetMap = ruleParser.parseRule(query);
+          InvalidFieldsCollector invalidFieldsCollector = new InvalidFieldsCollector();
+          Map<String, Set<String>> ruleSetMap = ruleParser.parseRule(query, invalidFieldsCollector);
+          if (invalidFieldsCollector.hasInvalidFields()) {
+            List<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
+            log.error(String.format("Failed to parse rule. Some fields in the rule were not valid.  client=%s, invalidFields=%s",id, toJson(invalidFields)));
+          }
           ruleSetMap.forEach((type, fields) -> intermediateResults.merge(type, fields, (oldSet, newSet) -> {
             oldSet.addAll(newSet);
             return oldSet;
@@ -52,5 +60,6 @@ public class AuthorizationHolderFactory {
     log.info("Parsed rules for scopes " + scopeToTypeMap.keySet());
     return Collections.unmodifiableMap(scopeToTypeMap);
   }
+
 }
 

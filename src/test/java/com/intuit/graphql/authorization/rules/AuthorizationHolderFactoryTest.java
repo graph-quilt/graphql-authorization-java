@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 
 import com.intuit.graphql.authorization.config.AuthzClient;
 import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLSchema;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +25,7 @@ public class AuthorizationHolderFactoryTest {
   public void failsToParseRules() {
     RuleParser ruleParser = mock(RuleParser.class);
 
-    when(ruleParser.parseRule(anyString()))
+    when(ruleParser.parseRule(anyString(), any(InvalidFieldsCollector.class)))
         .thenThrow(new RuntimeException("boom"));
 
     AuthorizationHolderFactory factory = new AuthorizationHolderFactory(ruleParser);
@@ -42,6 +44,29 @@ public class AuthorizationHolderFactoryTest {
   }
 
   @Test
+  public void unknownFieldDuringParseRule() {
+    GraphQLObjectType queryTypeMock = mock(GraphQLObjectType.class);
+
+    GraphQLSchema graphQLSchemaMock = mock(GraphQLSchema.class);
+    when(graphQLSchemaMock.getQueryType()).thenReturn(queryTypeMock);
+
+    QueryRuleParser ruleParser = new QueryRuleParser(graphQLSchemaMock);
+    AuthorizationHolderFactory factory = new AuthorizationHolderFactory(ruleParser);
+
+    Map<AuthzClient, List<String>> queriesByClient = new HashMap<>();
+
+    AuthzClient client = new AuthzClient();
+    client.setId("test-id");
+    client.setType(ClientAuthorizationType.OFFLINE);
+
+    queriesByClient.put(client, Collections.singletonList("query { thisIsInValidField }"));
+
+    final Map<String, Map<String, Set<String>>> result = factory
+        .parse(queriesByClient);
+    assertThat(result).isEmpty();
+  }
+
+  @Test
   public void mergesMultipleRules() {
     final RuleParser mockRuleParser = mock(RuleParser.class);
 
@@ -52,7 +77,7 @@ public class AuthorizationHolderFactoryTest {
 
     secondTypesAndFields.put("type2", Collections.emptySet());
 
-    when(mockRuleParser.parseRule(any()))
+    when(mockRuleParser.parseRule(any(), any(InvalidFieldsCollector.class)))
         .thenReturn(allowedTypesAndFields)
         .thenReturn(secondTypesAndFields);
 
@@ -83,7 +108,7 @@ public class AuthorizationHolderFactoryTest {
     Map<String, Set<String>> allowedTypesAndFields = new HashMap<>();
     allowedTypesAndFields.put("type", Collections.emptySet());
 
-    when(mockRuleParser.parseRule(any()))
+    when(mockRuleParser.parseRule(any(), any(InvalidFieldsCollector.class)))
         .thenReturn(allowedTypesAndFields);
 
     AuthorizationHolderFactory factory = new AuthorizationHolderFactory(mockRuleParser);

@@ -50,13 +50,13 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
     }
 
     this.authorizationHolder = new AuthorizationHolder(
-        getAuthorizationFactory(schema, authzListener).parse(configuration.getQueriesByClient()));
+        getAuthorizationFactory(schema).parse(configuration.getQueriesByClient()));
     this.principleFetcher = principleFetcher;
     this.authzListener = (Objects.nonNull(authzListener)) ? authzListener : DEFAULT_AUTHZ_LISTENER;
   }
 
-  static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema, AuthzListener authzListener) {
-    QueryRuleParser queryRuleParser = new QueryRuleParser(graphQLSchema, authzListener);
+  static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
+    QueryRuleParser queryRuleParser = new QueryRuleParser(graphQLSchema);
     return new AuthorizationHolderFactory(queryRuleParser);
   }
 

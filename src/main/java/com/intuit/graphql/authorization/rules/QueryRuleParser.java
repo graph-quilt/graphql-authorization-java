@@ -1,10 +1,8 @@
 package com.intuit.graphql.authorization.rules;
 
-import static com.intuit.graphql.authorization.rules.QueryRuleParserErrors.UNKNOWN_FIELD;
 import static com.intuit.graphql.authorization.util.GraphQLUtil.getFieldDefinition;
 import static com.intuit.graphql.authorization.util.GraphQLUtil.isNotEmpty;
 
-import com.intuit.graphql.authorization.enforcement.AuthzListener;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
 import graphql.language.Document;
 import graphql.language.Field;
@@ -31,15 +29,12 @@ public class QueryRuleParser implements RuleParser {
 
   private final GraphQLSchema schema;
 
-  private AuthzListener authzListener;
-
-  public QueryRuleParser(GraphQLSchema schema, AuthzListener authzListener) {
+  public QueryRuleParser(GraphQLSchema schema) {
     this.schema = Objects.requireNonNull(schema);
-    this.authzListener = authzListener;
   }
 
   private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
-      Map<String, Set<String>> typeToFieldMap) {
+      Map<String, Set<String>> typeToFieldMap, InvalidFieldsCollector invalidFieldsCollector) {
     if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
       GraphQLFieldsContainer parentType = (GraphQLFieldsContainer) graphQLOutputType;
       selectionSet.getSelections()
@@ -49,13 +44,13 @@ public class QueryRuleParser implements RuleParser {
               final GraphQLFieldDefinition fieldDefinition = getFieldDefinition(parentType,
                   field.getName());
               if (fieldDefinition == null) {
-                authzListener.onQueryParsingError(UNKNOWN_FIELD, parentType, field);
+                invalidFieldsCollector.onQueryParsingError(parentType, field);
               } else {
                 Set<String> fields = typeToFieldMap
                     .computeIfAbsent(parentType.getName(), k -> new HashSet<>());
                 fields.add(fieldDefinition.getName());
                 preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()),
-                    field.getSelectionSet(), typeToFieldMap);
+                    field.getSelectionSet(), typeToFieldMap, invalidFieldsCollector);
               }
             }
           });
@@ -63,7 +58,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   @Override
-  public Map<String, Set<String>> parseRule(final String query) {
+  public Map<String, Set<String>> parseRule(final String query, InvalidFieldsCollector invalidFieldsCollector) {
     Map<String, Set<String>> typeToFieldMap = new HashMap<>();
     Document document = new Parser().parseDocument(query);
     document.getDefinitions()
@@ -71,7 +66,7 @@ public class QueryRuleParser implements RuleParser {
           if (definition instanceof OperationDefinition) {
             OperationDefinition operationDefinition = (OperationDefinition) definition;
             GraphQLOutputType operationType = GraphQLUtil.getRootTypeFromOperation(operationDefinition, schema);
-            preOrder(operationType, operationDefinition.getSelectionSet(), typeToFieldMap);
+            preOrder(operationType, operationDefinition.getSelectionSet(), typeToFieldMap, invalidFieldsCollector);
           }
         });
     return typeToFieldMap;

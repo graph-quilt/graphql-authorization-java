@@ -44,7 +44,7 @@ public class TypeAndFieldAuthorizationHolderTest {
     ratingInfo = bookType.getFieldDefinition("rating");
 
     this.authorizationHolder = new AuthorizationHolder(
-        AuthzInstrumentation.getAuthorizationFactory(schema, new SimpleAuthZListener()).parse(authzClientConfiguration.getQueriesByClient()));
+        AuthzInstrumentation.getAuthorizationFactory(schema).parse(authzClientConfiguration.getQueriesByClient()));
 
   }
 

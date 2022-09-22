@@ -1,11 +1,8 @@
 package com.intuit.graphql.authorization.enforcement;
 
-import com.intuit.graphql.authorization.rules.QueryRuleParserErrors;
 import graphql.ExecutionInput;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionContext;
-import graphql.language.Field;
-import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLSchema;
 
 /**
@@ -38,6 +35,4 @@ public interface AuthzListener {
    */
   void onEnforcement(final boolean isEnforce, final ExecutionContext originalExecutionContext,
       final ExecutionContext enforcedExecutionContext);
-
-  void onQueryParsingError(QueryRuleParserErrors error, GraphQLFieldsContainer parentType, Field field);
 }
