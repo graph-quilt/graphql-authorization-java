@@ -34,7 +34,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   private void preOrder(GraphQLType graphQLOutputType, SelectionSet selectionSet,
-      Map<String, Set<String>> typeToFieldMap, InvalidFieldsCollector invalidFieldsCollector) {
+      Map<String, Set<String>> typeToFieldMap, RuleParserListener ruleParserListener) {
     if (graphQLOutputType instanceof GraphQLFieldsContainer && isNotEmpty(selectionSet)) {
       GraphQLFieldsContainer parentType = (GraphQLFieldsContainer) graphQLOutputType;
       selectionSet.getSelections()
@@ -44,13 +44,13 @@ public class QueryRuleParser implements RuleParser {
               final GraphQLFieldDefinition fieldDefinition = getFieldDefinition(parentType,
                   field.getName());
               if (fieldDefinition == null) {
-                invalidFieldsCollector.onQueryParsingError(parentType, field);
+                ruleParserListener.onQueryParsingError(parentType, field);
               } else {
                 Set<String> fields = typeToFieldMap
                     .computeIfAbsent(parentType.getName(), k -> new HashSet<>());
                 fields.add(fieldDefinition.getName());
                 preOrder(GraphQLTypeUtil.unwrapAll(fieldDefinition.getType()),
-                    field.getSelectionSet(), typeToFieldMap, invalidFieldsCollector);
+                    field.getSelectionSet(), typeToFieldMap, ruleParserListener);
               }
             }
           });
@@ -58,7 +58,7 @@ public class QueryRuleParser implements RuleParser {
   }
 
   @Override
-  public Map<String, Set<String>> parseRule(final String query, InvalidFieldsCollector invalidFieldsCollector) {
+  public Map<String, Set<String>> parseRule(final String query, RuleParserListener ruleParserListener) {
     Map<String, Set<String>> typeToFieldMap = new HashMap<>();
     Document document = new Parser().parseDocument(query);
     document.getDefinitions()
@@ -66,7 +66,7 @@ public class QueryRuleParser implements RuleParser {
           if (definition instanceof OperationDefinition) {
             OperationDefinition operationDefinition = (OperationDefinition) definition;
             GraphQLOutputType operationType = GraphQLUtil.getRootTypeFromOperation(operationDefinition, schema);
-            preOrder(operationType, operationDefinition.getSelectionSet(), typeToFieldMap, invalidFieldsCollector);
+            preOrder(operationType, operationDefinition.getSelectionSet(), typeToFieldMap, ruleParserListener);
           }
         });
     return typeToFieldMap;

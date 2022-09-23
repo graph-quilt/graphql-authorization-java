@@ -4,10 +4,11 @@ import graphql.schema.FieldCoordinates;
 import java.util.Set;
 import java.util.StringJoiner;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class FieldCoordinatesFormattingUtil {
 
-  private static final CharSequence DELIMITER_COMMA = ",";
+  private static final String DELIMITER_COMMA = ",";
 
   private FieldCoordinatesFormattingUtil() {
   }
@@ -16,9 +17,7 @@ public class FieldCoordinatesFormattingUtil {
     if (CollectionUtils.isEmpty(invalidFields)) {
       return "";
     }
-    StringJoiner stringJoiner = new StringJoiner(DELIMITER_COMMA);
-    invalidFields.forEach(fc -> stringJoiner.add(fc.toString()));
-    return stringJoiner.toString();
+    return StringUtils.join(invalidFields.iterator(), DELIMITER_COMMA);
   }
 
 }

@@ -49,9 +49,8 @@ public class AuthorizationHolderFactory {
       }
 
       if (invalidFieldsCollector.hasInvalidFields()) {
-        Set<FieldCoordinates> invalidFields = invalidFieldsCollector.getInvalidFields();
         log.error(String.format("Invalid fields found in query rule.  clientId=%s, invalidFields=%s",
-          id, FieldCoordinatesFormattingUtil.toString(invalidFields)));
+          id, invalidFieldsCollector.getInvalidFieldsAsString()));
       }
 
       if (!intermediateResults.isEmpty()) {

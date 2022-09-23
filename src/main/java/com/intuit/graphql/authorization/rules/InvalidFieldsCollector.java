@@ -1,5 +1,6 @@
 package com.intuit.graphql.authorization.rules;
 
+import com.intuit.graphql.authorization.util.FieldCoordinatesFormattingUtil;
 import graphql.language.Field;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLFieldsContainer;
@@ -9,18 +10,22 @@ import org.apache.commons.collections4.CollectionUtils;
 
 public class InvalidFieldsCollector implements RuleParserListener {
 
-  private final Set<FieldCoordinates> invalidField = new HashSet<>();
+  private final Set<FieldCoordinates> invalidFields = new HashSet<>();
 
   @Override
   public void onQueryParsingError(GraphQLFieldsContainer parentType, Field field) {
-    invalidField.add(FieldCoordinates.coordinates(parentType.getName(), field.getName()));
+    invalidFields.add(FieldCoordinates.coordinates(parentType.getName(), field.getName()));
   }
 
   public boolean hasInvalidFields() {
-    return CollectionUtils.isNotEmpty(invalidField);
+    return CollectionUtils.isNotEmpty(invalidFields);
   }
 
   public Set<FieldCoordinates> getInvalidFields() {
-    return this.invalidField;
+    return this.invalidFields;
+  }
+
+  public String getInvalidFieldsAsString() {
+    return FieldCoordinatesFormattingUtil.toString(this.invalidFields);
   }
 }
