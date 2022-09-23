@@ -6,5 +6,5 @@ import java.util.Set;
 
 public interface RuleParser {
 
-  Map<String, Set<String>> parseRule(String rule);
+  Map<String, Set<String>> parseRule(String rule, RuleParserListener ruleParserListener);
 }
