@@ -36,7 +36,7 @@
 
   <properties>
     <junit5.version>5.5.0</junit5.version>
-    <lombok.version>1.16.20</lombok.version>
+    <lombok.version>1.18.8</lombok.version>
     <graphql-java.version>17.4</graphql-java.version>
     <jacoco.enabled>true</jacoco.enabled>
     <jacoco.version>0.8.4</jacoco.version>

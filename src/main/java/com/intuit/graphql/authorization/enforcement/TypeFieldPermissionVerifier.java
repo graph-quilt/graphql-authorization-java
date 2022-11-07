@@ -10,11 +10,13 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeUtil;
 import java.util.Map;
 import java.util.Set;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.SetUtils;
 
 public class TypeFieldPermissionVerifier implements PermissionVerifier {
 
+  @Getter
   private final Map<String, Set<String>> typeToFieldsMap;
   private final GraphQLSchema schema;
 
