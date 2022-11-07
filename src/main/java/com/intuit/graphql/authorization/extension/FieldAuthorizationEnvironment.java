@@ -1,7 +1,6 @@
 package com.intuit.graphql.authorization.extension;
 
 import graphql.language.Field;
-import graphql.language.SelectionSetContainer;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLOutputType;

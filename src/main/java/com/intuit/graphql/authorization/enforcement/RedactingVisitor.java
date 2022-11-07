@@ -14,8 +14,6 @@ import graphql.execution.ExecutionContext;
 import graphql.language.Field;
 import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLFieldDefinition;
-import graphql.schema.GraphQLFieldsContainer;
-import graphql.schema.GraphQLNamedType;
 import graphql.schema.GraphQLUnmodifiedType;
 import graphql.util.TreeTransformerUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +35,7 @@ public class RedactingVisitor extends QueryVisitorStub {
     this.executionContext = executionContext;
     this.authzListener = authzListener;
     this.authorizationExtension = authorizationExtension;
-    typeFieldPermissionVerifier = instrumentationState.getTypeFieldPermissionVerifier();
+    this.typeFieldPermissionVerifier = instrumentationState.getTypeFieldPermissionVerifier();
   }
 
   @Override
@@ -61,14 +59,14 @@ public class RedactingVisitor extends QueryVisitorStub {
       instrumentationState.getAuthzErrors().add(error);
 
       TreeTransformerUtil.deleteNode(queryVisitorFieldEnvironment.getTraverserContext());
-    }
-
-    FieldAuthorizationEnvironment fieldAuthorizationEnvironment = createFieldAuthorizationEnvironment(queryVisitorFieldEnvironment);
-    FieldAuthorizationResult fieldAuthorizationResult = authorizationExtension.authorize(fieldAuthorizationEnvironment);
-    if (!fieldAuthorizationResult.isAllowed()) {
-      authzListener.onFieldRedaction(executionContext, queryVisitorFieldEnvironment);
-      instrumentationState.getAuthzErrors().add(fieldAuthorizationResult.getGraphqlErrorException());
-      TreeTransformerUtil.deleteNode(queryVisitorFieldEnvironment.getTraverserContext());
+    } else {
+      FieldAuthorizationEnvironment fieldAuthorizationEnvironment = createFieldAuthorizationEnvironment(queryVisitorFieldEnvironment);
+      FieldAuthorizationResult fieldAuthorizationResult = authorizationExtension.authorize(fieldAuthorizationEnvironment);
+      if (!fieldAuthorizationResult.isAllowed()) {
+        authzListener.onFieldRedaction(executionContext, queryVisitorFieldEnvironment);
+        instrumentationState.getAuthzErrors().add(fieldAuthorizationResult.getGraphqlErrorException());
+        TreeTransformerUtil.deleteNode(queryVisitorFieldEnvironment.getTraverserContext());
+      }
     }
   }
 
@@ -76,12 +74,13 @@ public class RedactingVisitor extends QueryVisitorStub {
       QueryVisitorFieldEnvironment queryVisitorFieldEnvironment) {
 
     GraphQLUnmodifiedType parentType = unwrapAll(queryVisitorFieldEnvironment.getParentType());
+    Field field = queryVisitorFieldEnvironment.getField();
 
     FieldCoordinates fieldCoordinates = FieldCoordinates
-      .coordinates(parentType.getName(), queryVisitorFieldEnvironment.getField().getName());
+      .coordinates(parentType.getName(), field.getName());
 
     return FieldAuthorizationEnvironment.builder()
-        .field(queryVisitorFieldEnvironment.getField())
+        .field(field)
         .arguments(queryVisitorFieldEnvironment.getArguments())
         .fieldCoordinates(fieldCoordinates)
         .fieldDefinition(queryVisitorFieldEnvironment.getFieldDefinition())
