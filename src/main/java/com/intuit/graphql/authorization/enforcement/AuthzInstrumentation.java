@@ -1,6 +1,9 @@
 package com.intuit.graphql.authorization.enforcement;
 
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
+import com.intuit.graphql.authorization.extension.AuthorizationExtension;
+import com.intuit.graphql.authorization.extension.AuthorizationExtensionProvider;
+import com.intuit.graphql.authorization.extension.DefaultAuthorizationExtensionProvider;
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
@@ -38,13 +41,15 @@ import org.apache.commons.collections4.CollectionUtils;
 public class AuthzInstrumentation extends SimpleInstrumentation {
 
   private static final AuthzListener DEFAULT_AUTHZ_LISTENER = new SimpleAuthZListener();
+  private static final AuthorizationExtensionProvider DEFAULT_AUTH_EXTENSION_PROVIDER = new DefaultAuthorizationExtensionProvider();
   private final AuthorizationHolder authorizationHolder;
   private final PrincipleFetcher principleFetcher;
   private AuthzListener authzListener = DEFAULT_AUTHZ_LISTENER;
-
+  private final AuthorizationExtensionProvider authorizationExtensionProvider;
 
   public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,
-      PrincipleFetcher principleFetcher, AuthzListener authzListener) {
+      PrincipleFetcher principleFetcher, AuthzListener authzListener,
+      AuthorizationExtensionProvider authorizationExtensionProvider) {
     if (configuration.getQueriesByClient().isEmpty()) {
       throw new IllegalArgumentException("Clients missing from AuthZClientConfiguration");
     }
@@ -53,6 +58,12 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         getAuthorizationFactory(schema).parse(configuration.getQueriesByClient()));
     this.principleFetcher = principleFetcher;
     this.authzListener = (Objects.nonNull(authzListener)) ? authzListener : DEFAULT_AUTHZ_LISTENER;
+    this.authorizationExtensionProvider = authorizationExtensionProvider;
+  }
+
+  public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,
+      PrincipleFetcher principleFetcher, AuthzListener authzListener) {
+    this(configuration, schema, principleFetcher, authzListener, DEFAULT_AUTH_EXTENSION_PROVIDER);
   }
 
   static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
@@ -84,22 +95,23 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   public ExecutionContext instrumentExecutionContext(ExecutionContext executionContext,
       InstrumentationExecutionParameters parameters) {
     AuthzInstrumentationState state = parameters.getInstrumentationState();
+    AuthorizationExtension authorizationExtension = this.authorizationExtensionProvider.getAuthorizationExtension(executionContext, parameters);
     ExecutionContext enforcedExecutionContext =
-        state.isEnforce() ? getAuthzExecutionContext(executionContext, state) : executionContext;
+        state.isEnforce() ? getAuthzExecutionContext(executionContext, state, authorizationExtension) : executionContext;
     authzListener.onEnforcement(state.isEnforce(), executionContext, enforcedExecutionContext);
     return enforcedExecutionContext;
   }
 
   private ExecutionContext getAuthzExecutionContext(ExecutionContext executionContext,
-      AuthzInstrumentationState state) {
+      AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
     log.info("Authorization is enabled");
     ExecutionContext restrictedContext = executionContext
         .transform(executionContextBuilder -> executionContextBuilder
             .operationDefinition(executionContext.getOperationDefinition()
                 .transform(operationDefinitionBuilder ->
                     operationDefinitionBuilder
-                        .selectionSet(redactSelectionSet(executionContext, state))))
-            .fragmentsByName(redactFragments(executionContext, state))
+                        .selectionSet(redactSelectionSet(executionContext, state, authorizationExtension))))
+            .fragmentsByName(redactFragments(executionContext, state, authorizationExtension))
         );
     log.info("Restricted executionContext created");
     return restrictedContext;
@@ -130,15 +142,15 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         .fragmentsByName(executionContext.getFragmentsByName());
   }
 
-  Map<String, FragmentDefinition> redactFragments(ExecutionContext executionContext, AuthzInstrumentationState state) {
+  Map<String, FragmentDefinition> redactFragments(ExecutionContext executionContext, AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
     //treat each fragment as root and redact based on configuration
     return executionContext.getFragmentsByName().values().stream().map(entry ->
-        redactFragment(entry, executionContext, state))
+        redactFragment(entry, executionContext, state, authorizationExtension))
         .collect(Collectors.toMap(FragmentDefinition::getName, Function.identity()));
   }
 
   FragmentDefinition redactFragment(FragmentDefinition fragmentDefinition, ExecutionContext executionContext,
-      AuthzInstrumentationState state) {
+      AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
     fragmentDefinition.getTypeCondition();
     QueryTransformer queryTransformer = initQueryTransformerBuilder(executionContext)
         .root(fragmentDefinition)
@@ -146,11 +158,12 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         .build();
 
     return (FragmentDefinition)
-        queryTransformer.transform(new RedactingVisitor(state, executionContext, authzListener));
+        queryTransformer.transform(new RedactingVisitor(state, executionContext, authzListener,
+            authorizationExtension));
   }
 
 
-  SelectionSet redactSelectionSet(ExecutionContext executionContext, AuthzInstrumentationState state) {
+  SelectionSet redactSelectionSet(ExecutionContext executionContext, AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
     GraphQLObjectType rootType = GraphQLUtil.getRootTypeFromOperation(executionContext.getOperationDefinition(),
         executionContext.getGraphQLSchema());
 
@@ -159,7 +172,8 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         .root(executionContext.getOperationDefinition().getSelectionSet())
         .build();
 
-    return (SelectionSet) transformer.transform(new RedactingVisitor(state, executionContext, authzListener));
+    return (SelectionSet) transformer.transform(new RedactingVisitor(state, executionContext, authzListener,
+        authorizationExtension));
   }
 
 

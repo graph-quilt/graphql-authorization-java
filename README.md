@@ -67,6 +67,22 @@ builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSche
 See the [release tab](https://github.com/graph-quilt/graphql-authorization-java/releases) for
 the latest information on releases.
 
+#### Authorization Extension
+
+With Authorization extension, users of this library can implement custom authorization in addition
+Type-Field based access control list.  
+
+There are two classes that needs to be implemented:
+
+1. AuthorizationExtensionProvider - main purpose of this class is AuthorizationExtension object creation 
+   using the `getAuthorizationExtension()` method.  This method is called during `AuthzInstrumentation.instrumentExecutionContent()`.
+   The `getAuthorizationExtension()` has direct access to `ExecutionContext` object which may be useful if object creation
+   depends on request related data .e.g HTTP headers.    
+2. AuthorizationExtension - contains the custom authorization logic which has access to data related 
+   to a field selection being authorized. 
+
+Finally, in order to use the authorization extension, the implemented `AuthorizationExtensionProvider` 
+can be passed on `AuthzInstrumentation` constructor.
 
 ### Compatibility:
 
