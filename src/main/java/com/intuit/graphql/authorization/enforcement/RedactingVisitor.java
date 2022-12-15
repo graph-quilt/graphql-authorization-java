@@ -6,6 +6,7 @@ import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.FieldAuthorizationEnvironment;
 import com.intuit.graphql.authorization.extension.FieldAuthorizationResult;
+import com.intuit.graphql.authorization.util.QueryPathUtils;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
 import graphql.analysis.QueryVisitorFieldEnvironment;
@@ -43,7 +44,10 @@ public class RedactingVisitor extends QueryVisitorStub {
     final GraphQLUnmodifiedType graphQLUnmodifiedParentType = unwrapAll(queryVisitorFieldEnvironment.getParentType());
     GraphQLFieldDefinition requestedFieldDefinition = queryVisitorFieldEnvironment.getFieldDefinition();
 
-    boolean permitted = typeFieldPermissionVerifier.isPermitted(graphQLUnmodifiedParentType, requestedFieldDefinition);
+    boolean permitted = true;
+    if (instrumentationState.isEnforce()) {
+      permitted = typeFieldPermissionVerifier.isPermitted(graphQLUnmodifiedParentType, requestedFieldDefinition);
+    }
 
     if (!permitted) {
       //record an error
@@ -86,6 +90,7 @@ public class RedactingVisitor extends QueryVisitorStub {
         .fieldDefinition(queryVisitorFieldEnvironment.getFieldDefinition())
         .parentType(queryVisitorFieldEnvironment.getParentType())
         .graphQLSchema(queryVisitorFieldEnvironment.getSchema())
+        .path(QueryPathUtils.getNodesAsPathList(queryVisitorFieldEnvironment.getTraverserContext()))
         .build();
   }
 }

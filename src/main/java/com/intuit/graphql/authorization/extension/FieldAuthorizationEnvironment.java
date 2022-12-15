@@ -5,6 +5,7 @@ import graphql.schema.FieldCoordinates;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -34,4 +35,6 @@ public class FieldAuthorizationEnvironment {
   @NonNull
   @EqualsAndHashCode.Exclude
   private GraphQLSchema graphQLSchema;
+  @NonNull @EqualsAndHashCode.Exclude
+  private List<Object> path;
 }

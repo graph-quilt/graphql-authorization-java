@@ -1,12 +1,16 @@
 package com.intuit.graphql.authorization.enforcement;
 
+import static com.intuit.graphql.authorization.util.InstrumentDataFetcherAction.RETURN_NULL_DATA;
+
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.AuthorizationExtensionProvider;
+import com.intuit.graphql.authorization.extension.DefaultAuthorizationExtension;
 import com.intuit.graphql.authorization.extension.DefaultAuthorizationExtensionProvider;
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
+import com.intuit.graphql.authorization.util.InstrumentDataFetcherAction;
 import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
@@ -21,8 +25,10 @@ import graphql.execution.instrumentation.parameters.InstrumentationFieldFetchPar
 import graphql.language.FragmentDefinition;
 import graphql.language.SelectionSet;
 import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
+import graphql.schema.StaticDataFetcher;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -96,10 +102,15 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
       InstrumentationExecutionParameters parameters) {
     AuthzInstrumentationState state = parameters.getInstrumentationState();
     AuthorizationExtension authorizationExtension = this.authorizationExtensionProvider.getAuthorizationExtension(executionContext, parameters);
-    ExecutionContext enforcedExecutionContext =
-        state.isEnforce() ? getAuthzExecutionContext(executionContext, state, authorizationExtension) : executionContext;
+    ExecutionContext enforcedExecutionContext = shouldEnforceAuthorization(state, authorizationExtension)
+      ? getAuthzExecutionContext(executionContext, state, authorizationExtension)
+      : executionContext;
     authzListener.onEnforcement(state.isEnforce(), executionContext, enforcedExecutionContext);
     return enforcedExecutionContext;
+  }
+
+  private boolean shouldEnforceAuthorization(AuthzInstrumentationState state,  AuthorizationExtension authorizationExtension) {
+    return state.isEnforce() || !(authorizationExtension instanceof DefaultAuthorizationExtension);
   }
 
   private ExecutionContext getAuthzExecutionContext(ExecutionContext executionContext,
@@ -180,8 +191,15 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   @Override
   public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> dataFetcher,
       InstrumentationFieldFetchParameters parameters) {
-    AuthzInstrumentationState state = parameters.getInstrumentationState();
-    return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state) : dataFetcher;
+
+   InstrumentDataFetcherAction action = principleFetcher.instrumentDataFetcher(dataFetcher, parameters);
+   if (action == RETURN_NULL_DATA) {
+    return new StaticDataFetcher(null);
+   } else {
+     AuthzInstrumentationState state = parameters.getInstrumentationState();
+     return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state)
+         : dataFetcher;
+   }
   }
 
   @Data
