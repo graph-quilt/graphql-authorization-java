@@ -1,6 +1,6 @@
 package com.intuit.graphql.authorization.util;
 
-import static com.intuit.graphql.authorization.util.InstrumentDataFetcherAction.CONTINUE;
+import static com.intuit.graphql.authorization.util.InstrumentDataFetcherAction.DEFAULT;
 
 import graphql.execution.instrumentation.parameters.InstrumentationFieldFetchParameters;
 import graphql.schema.DataFetcher;
@@ -21,7 +21,7 @@ public interface PrincipleFetcher {
 
   default InstrumentDataFetcherAction instrumentDataFetcher(DataFetcher<?> dataFetcher,
       InstrumentationFieldFetchParameters parameters) {
-      return CONTINUE;
+      return DEFAULT;
   }
 
 }
