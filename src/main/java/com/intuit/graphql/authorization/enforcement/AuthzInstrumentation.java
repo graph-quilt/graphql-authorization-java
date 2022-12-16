@@ -192,14 +192,14 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> dataFetcher,
       InstrumentationFieldFetchParameters parameters) {
 
-   InstrumentDataFetcherAction action = principleFetcher.instrumentDataFetcher(dataFetcher, parameters);
-   if (action == RETURN_NULL_DATA) {
-    return new StaticDataFetcher(null);
-   } else {
-     AuthzInstrumentationState state = parameters.getInstrumentationState();
-     return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state)
+    InstrumentDataFetcherAction action = principleFetcher.instrumentDataFetcher(dataFetcher, parameters);
+    if (action == RETURN_NULL_DATA) {
+      return new StaticDataFetcher(null);
+    } else {
+      AuthzInstrumentationState state = parameters.getInstrumentationState();
+      return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state)
          : dataFetcher;
-   }
+    }
   }
 
   @Data
