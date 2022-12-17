@@ -1,7 +1,5 @@
 package com.intuit.graphql.authorization.enforcement;
 
-import static com.intuit.graphql.authorization.util.InstrumentDataFetcherAction.RETURN_NULL_DATA;
-
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.AuthorizationExtensionProvider;
@@ -10,7 +8,6 @@ import com.intuit.graphql.authorization.extension.DefaultAuthorizationExtensionP
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
-import com.intuit.graphql.authorization.util.InstrumentDataFetcherAction;
 import com.intuit.graphql.authorization.util.PrincipleFetcher;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
@@ -25,10 +22,8 @@ import graphql.execution.instrumentation.parameters.InstrumentationFieldFetchPar
 import graphql.language.FragmentDefinition;
 import graphql.language.SelectionSet;
 import graphql.schema.DataFetcher;
-import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
-import graphql.schema.StaticDataFetcher;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -191,16 +186,8 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   @Override
   public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> dataFetcher,
       InstrumentationFieldFetchParameters parameters) {
-
-    InstrumentDataFetcherAction action = principleFetcher.instrumentDataFetcher(dataFetcher, parameters);
-    if (action == RETURN_NULL_DATA) {
-      return new StaticDataFetcher(null);
-    }
-
-    // InstrumentDataFetcherAction.DEFAULT
     AuthzInstrumentationState state = parameters.getInstrumentationState();
-    return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state)
-       : dataFetcher;
+    return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state) : dataFetcher;
   }
 
   @Data

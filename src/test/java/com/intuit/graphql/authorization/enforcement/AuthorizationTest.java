@@ -15,7 +15,6 @@ import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
 import graphql.GraphQL;
-import graphql.execution.instrumentation.Instrumentation;
 import graphql.introspection.IntrospectionQuery;
 import graphql.schema.GraphQLSchema;
 import java.io.IOException;
@@ -80,7 +79,9 @@ public class AuthorizationTest {
     schema = HelperBuildTestSchema.buildSchema(sdl);
 
     authzInstrumentation = new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null);
-    graphql = buildGraphQL(authzInstrumentation);
+    GraphQL.Builder builder = GraphQL.newGraphQL(schema);
+    builder.instrumentation(authzInstrumentation);
+    graphql = builder.build();
   }
 
   @Test
@@ -422,22 +423,6 @@ public class AuthorizationTest {
 
   }
 
-  @Test
-  public void authzWithSomeRedactionsAndInstrumentDataFetcherActionTest() {
-    PrincipleFetcher testPrincipleFetcherTest = new HelperPrincipleFetcherWithInstrumentation();
-    AuthzInstrumentation testAuthzInstrumentation = new AuthzInstrumentation(authzClientConfiguration, schema, testPrincipleFetcherTest, null);
-    GraphQL testGraphQL = buildGraphQL(testAuthzInstrumentation);
-    executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("Test.client2").build();
-    ExecutionResult result = testGraphQL.execute(executionInput);
-
-    assertTrue(result.getErrors().get(0).getMessage()
-        .contains("403 - Not authorized to access field=lastName of type=Author"));
-    assertTrue(
-        result.getErrors().get(1).getMessage().contains("403 - Not authorized to access field=rating of type=Book"));
-    assertTrue(result.getData().toString()
-        .equals("{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=null, author={__typename=Author, firstName=Herman}}}"));
-  }
-
   public boolean hasValue(JsonArray json, String key, String value, String key1, String value1) {
     for (int i = 0; i < json.size(); i++) {  // iterate through the JsonArray
       // first I get the 'i' JsonElement as a JsonObject, then I get the key as a string and I compare it with the value
@@ -458,9 +443,5 @@ public class AuthorizationTest {
         ).collect(Collectors.toSet());
   }
 
-  private GraphQL buildGraphQL(Instrumentation instrumentation) {
-    GraphQL.Builder builder = GraphQL.newGraphQL(this.schema);
-    builder.instrumentation(instrumentation);
-    return builder.build();
-  }
+
 }
