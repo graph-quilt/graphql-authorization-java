@@ -1,48 +1,36 @@
 <div align="center">
 
-![graphql-authorization-java](./graphql-authorization-java-logo.png)
+![graphql-authorization-java](./graphql-authorization-java.png)
 
 </div>
 
 # GraphQL Authorization Library
 
-This library responsible for enforcing access control for schema types and fields
+A powerful library for securing a GraphQL service using attribute level access control.
 
 -----
 
+![Master Build](https://github.com/graph-quilt/graphql-authorization-java/actions/workflows/main.yml/badge.svg)
 
-[Builds](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)    
-
-[![CircleCI](https://circleci.com/gh/graph-quilt/graphql-authorization-java/tree/master.svg?style=shield)](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)
 
 ### Description
 
-This library enabled access control for accessing types and fields when making a graphql request.
-
-It currently supports queries for 3rd party clients.
-
+This library enforces access control on GraphQL queries by checking for .
 
 *  A graphQL request with valid access returns all the fields requested 
 *  A graphQL request that has access to some of the requested fields/types returns:
    <ul><ul><li> Requested fields it has access to</li>
-   <li>Error message for the fields it does not have access to 
+   <li>Error message for the fields it does not have access to
     
-
-    ```
-    "errors": [
+```json lines
+ "errors": [
     {
       "message": "403 - Not authorized to access field=amendBalanceDueAmt of type=Irs1040Type",
-      "locations": [
-        {
-          "line": 45,
-          "column": 15
-        }
-      ],
-      "extensions": {
-        "classification": "DataFetchingException"
-      }
+      ...
     },
-    ```
+```
+   
+
 
 ### Usage
 
