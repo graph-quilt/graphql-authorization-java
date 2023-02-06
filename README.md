@@ -4,23 +4,19 @@
 
 </div>
 
-# GraphQL Authorization Library
-
-A powerful library for securing a GraphQL service using attribute level access control.
+<div style="text-align: center;">A powerful library for securing a GraphQL service using attribute level access control. </div>
 
 -----
 
 ![Master Build](https://github.com/graph-quilt/graphql-authorization-java/actions/workflows/main.yml/badge.svg)
 
 
-### Description
+## Introduction
 
-This library enforces access control on GraphQL queries by checking for .
-
-*  A graphQL request with valid access returns all the fields requested 
-*  A graphQL request that has access to some of the requested fields/types returns:
-   <ul><ul><li> Requested fields it has access to</li>
-   <li>Error message for the fields it does not have access to
+This library enforces access control on GraphQL queries by checking for allowed types and fields. A GraphQL query that 
+has access to some of the requested fields/types will return:
+* Requested fields it has access to
+* Authorization Error message for the fields it does not have access to
     
 ```json lines
  "errors": [
@@ -29,18 +25,8 @@ This library enforces access control on GraphQL queries by checking for .
       ...
     },
 ```
-   
 
-
-### Usage
-
-* Implement the AuthzConfiguration interface and provide the configuration at initialization.
-* Implement the PrincipleFetcher interface to get the request-context information at execution time.
-* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance 
-
- ```
-builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSchema, principleFetcher))
- ```
+## Getting Started 
 
 #### Maven coordinates:
 
@@ -52,8 +38,16 @@ builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSche
 </dependency>
 ```
 
-See the [release tab](https://github.com/graph-quilt/graphql-authorization-java/releases) for
-the latest information on releases.
+### Usage
+
+* Implement the AuthzConfiguration interface and provide the configuration for initialization.
+
+* Implement the PrincipleFetcher interface to get the request-context information at execution time.
+* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance 
+
+ ```
+builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSchema, principleFetcher))
+ ```
 
 #### Authorization Extension
 
