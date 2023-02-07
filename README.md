@@ -40,36 +40,21 @@ has access to some of the requested fields/types will return:
 
 ### Usage
 
-* Implement the AuthzConfiguration interface and provide the configuration for initialization.
+* Implement the AuthzConfiguration interface and provide the configuration for initialization. The configuration contains
+  mappings of scopes represented by `id` to the `list of Queries` allowed by that `id`. The id can also represent clientids, 
+  userids, scopes or roles.
 
-* Implement the PrincipleFetcher interface to get the request-context information at execution time.
-* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance 
+* Implement the PrincipleFetcher interface to get the request-context information at execution time. The PrincipleFetcher
+  is invoked at runtime to fetch the list of scopes associated with the request.
 
+* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance. More on
+  [graphql-java instrumentation](https://www.graphql-java.com/documentation/instrumentation/)
+
+ ```java
+ GraphQL.newGraphQL(schema)
+       .instrumentation(new AuthzInstrumentation(authzConfiguration, schema, principleFetcher))
+       .build();
  ```
-builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSchema, principleFetcher))
- ```
-
-#### Authorization Extension
-
-With Authorization extension, users of this library can implement custom authorization in addition
-Type-Field based access control list.  
-
-There are two classes that needs to be implemented:
-
-1. AuthorizationExtensionProvider - main purpose of this class is AuthorizationExtension object creation 
-   using the `getAuthorizationExtension()` method.  This method is called during `AuthzInstrumentation.instrumentExecutionContent()`.
-   The `getAuthorizationExtension()` has direct access to `ExecutionContext` object which may be useful if object creation
-   depends on request related data .e.g HTTP headers.    
-2. AuthorizationExtension - contains the custom authorization logic which has access to data related 
-   to a field selection being authorized. 
-
-Finally, in order to use the authorization extension, the implemented `AuthorizationExtensionProvider` 
-can be passed on `AuthzInstrumentation` constructor.
-
-### Compatibility:
-
- * Java 8, 
- * GraphQL-Java V13
 
 ### Contributing
 
