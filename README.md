@@ -1,58 +1,32 @@
 <div align="center">
 
-![graphql-authorization-java](./graphql-authorization-java-logo.png)
+![graphql-authorization-java](./graphql-authorization-java.png)
 
 </div>
 
-# GraphQL Authorization Library
-
-This library responsible for enforcing access control for schema types and fields
+<div style="text-align: center;">A powerful library for securing a GraphQL service using attribute level access control. </div>
 
 -----
 
-
-[Builds](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)    
-
-[![CircleCI](https://circleci.com/gh/graph-quilt/graphql-authorization-java/tree/master.svg?style=shield)](https://app.circleci.com/pipelines/github/graph-quilt/graphql-authorization-java)
-
-### Description
-
-This library enabled access control for accessing types and fields when making a graphql request.
-
-It currently supports queries for 3rd party clients.
+![Master Build](https://github.com/graph-quilt/graphql-authorization-java/actions/workflows/main.yml/badge.svg)
 
 
-*  A graphQL request with valid access returns all the fields requested 
-*  A graphQL request that has access to some of the requested fields/types returns:
-   <ul><ul><li> Requested fields it has access to</li>
-   <li>Error message for the fields it does not have access to 
+## Introduction
+
+This library enforces access control on GraphQL queries by checking for allowed types and fields. A GraphQL query that 
+has access to some of the requested fields/types will return:
+* Requested fields it has access to
+* Authorization Error message for the fields it does not have access to
     
-
-    ```
-    "errors": [
+```json lines
+ "errors": [
     {
       "message": "403 - Not authorized to access field=amendBalanceDueAmt of type=Irs1040Type",
-      "locations": [
-        {
-          "line": 45,
-          "column": 15
-        }
-      ],
-      "extensions": {
-        "classification": "DataFetchingException"
-      }
+      ...
     },
-    ```
+```
 
-### Usage
-
-* Implement the AuthzConfiguration interface and provide the configuration at initialization.
-* Implement the PrincipleFetcher interface to get the request-context information at execution time.
-* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance 
-
- ```
-builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSchema, principleFetcher))
- ```
+## Getting Started 
 
 #### Maven coordinates:
 
@@ -64,30 +38,23 @@ builder.instrumentation(new AuthzInstrumentation(authzConfiguration, graphQLSche
 </dependency>
 ```
 
-See the [release tab](https://github.com/graph-quilt/graphql-authorization-java/releases) for
-the latest information on releases.
+### Usage
 
-#### Authorization Extension
+* Implement the AuthzConfiguration interface and provide the configuration for initialization. The configuration contains
+  mappings of scopes represented by `id` to the `list of Queries` allowed by that `id`. The id can also represent clientids, 
+  userids, scopes or roles.
 
-With Authorization extension, users of this library can implement custom authorization in addition
-Type-Field based access control list.  
+* Implement the PrincipleFetcher interface to get the request-context information at execution time. The PrincipleFetcher
+  is invoked at runtime to fetch the list of scopes associated with the request.
 
-There are two classes that needs to be implemented:
+* Add the AuthzInstrumentation defined in the library as an instrumentation when you create your GraphQL Instance. More on
+  [graphql-java instrumentation](https://www.graphql-java.com/documentation/instrumentation/)
 
-1. AuthorizationExtensionProvider - main purpose of this class is AuthorizationExtension object creation 
-   using the `getAuthorizationExtension()` method.  This method is called during `AuthzInstrumentation.instrumentExecutionContent()`.
-   The `getAuthorizationExtension()` has direct access to `ExecutionContext` object which may be useful if object creation
-   depends on request related data .e.g HTTP headers.    
-2. AuthorizationExtension - contains the custom authorization logic which has access to data related 
-   to a field selection being authorized. 
-
-Finally, in order to use the authorization extension, the implemented `AuthorizationExtensionProvider` 
-can be passed on `AuthzInstrumentation` constructor.
-
-### Compatibility:
-
- * Java 8, 
- * GraphQL-Java V13
+ ```java
+ GraphQL.newGraphQL(schema)
+       .instrumentation(new AuthzInstrumentation(authzConfiguration, schema, principleFetcher))
+       .build();
+ ```
 
 ### Contributing
 
