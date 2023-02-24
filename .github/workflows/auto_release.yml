@@ -32,12 +32,12 @@ jobs:
 #      - name: Set projects Maven version to GitHub Action GUI set version
 #        run: mvn versions:set "-DnewVersion=${{ github.event.inputs.releaseversion }}"
 
-      - name: Publish package
-        run: mvn --batch-mode release:prepare release:perform -P release -DskipTests=true
-        env:
-          MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
+#      - name: Publish package
+#        run: mvn --batch-mode release:prepare release:perform -P release -DskipTests=true
+#        env:
+#          MAVEN_USERNAME: ${{ secrets.OSS_SONATYPE_USERNAME }}
+#          MAVEN_PASSWORD: ${{ secrets.OSS_SONATYPE_PASSWORD }}
+#          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
       - uses: auto-it/setup-auto@v1
 
