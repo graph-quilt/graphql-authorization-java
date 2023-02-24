@@ -45,3 +45,7 @@ jobs:
             ```
           draft: false
           prerelease: false
+
+      - name: Read version
+        run:
+          echo Version now: ${VERSION}
