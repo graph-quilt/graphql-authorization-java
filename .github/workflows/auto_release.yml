@@ -43,3 +43,29 @@ jobs:
 
       - name: Auto Release
         run: auto release -d
+
+      - name: GitHub Tag Name example
+        run: |
+          echo "Tag name from GITHUB_REF_NAME: $GITHUB_REF_NAME"
+          echo "Tag name from github.ref_name: ${{  github.ref_name }}"
+
+#      - name: Create GitHub Release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          tag_name: ${{ github.event.inputs.releaseversion }}
+#          release_name: ${{ github.event.inputs.releaseversion }}
+#          body: |
+#            ```
+#            <dependencies>
+#              <dependency>
+#                  <groupId>de.codecentric</groupId>
+#                  <artifactId>cxf-spring-boot-starter</artifactId>
+#                  <version>${{ github.event.inputs.releaseversion }}</version>
+#              </dependency>
+#            </dependencies>
+#            ```
+#          draft: false
+#          prerelease: false
