@@ -15,11 +15,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Write release version
-        id: release-version
+        id: calculate_version
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo Version: $VERSION
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
 #      - name: Auto Dry run
@@ -42,7 +41,7 @@ jobs:
               <dependency>
                   <groupId>com.intuit.graphql</groupId>
                   <artifactId>graphql-authorization-java</artifactId>
-                  <version> ${{ steps.release-version.outputs.version }} </version>
+                  <version>${{ steps.calculate_version.outputs.version }}</version>
               </dependency>
             ```
           draft: false
