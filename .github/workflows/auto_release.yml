@@ -1,4 +1,4 @@
-name: release-to-maven-central
+name: Auto dry run
 on:
   workflow_dispatch:
     inputs:
