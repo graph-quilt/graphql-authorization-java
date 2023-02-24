@@ -31,21 +31,18 @@ jobs:
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+          VERSION: $VERSION
         with:
           tag_name: ${{ github.ref }}
-          release_name: ${VERSION}
+          release_name: ${{ github.ref }}
           body: |
             ### Usage in pom.xml file 
             ``` 
               <dependency>
                   <groupId>com.intuit.graphql</groupId>
                   <artifactId>graphql-authorization-java</artifactId>
-                  <version> ${VERSION} </version>
+                  <version>${VERSION}</version>
               </dependency>
             ```
           draft: false
           prerelease: false
-
-      - name: Read version
-        run: |
-          echo Version now: ${VERSION}
