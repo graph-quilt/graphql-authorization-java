@@ -18,7 +18,7 @@ jobs:
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           echo Version: $VERSION
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "::set-output name=version::${VERSION}"
 
 #      - name: Auto Dry run
 #        uses: auto-it/setup-auto@v1
@@ -40,7 +40,7 @@ jobs:
               <dependency>
                   <groupId>com.intuit.graphql</groupId>
                   <artifactId>graphql-authorization-java</artifactId>
-                  <version> ${{ github.ref }} </version>
+                  <version> ${{ steps.set_env_var.outputs.version }} </version>
               </dependency>
             ```
           draft: false
