@@ -40,7 +40,7 @@ jobs:
               <dependency>
                   <groupId>com.intuit.graphql</groupId>
                   <artifactId>graphql-authorization-java</artifactId>
-                  <version>${{VERSION}}</version>
+                  <version>$VERSION</version>
               </dependency>
             ```
           draft: false
