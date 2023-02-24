@@ -47,5 +47,5 @@ jobs:
           prerelease: false
 
       - name: Read version
-        run:
+        run: |
           echo Version now: ${VERSION}
