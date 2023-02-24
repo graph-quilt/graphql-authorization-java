@@ -14,6 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Write release version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo Version: $VERSION
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -23,14 +29,13 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           body: |
-            ```
-            <dependencies>
+            ### Usage in pom file 
+            ``` 
               <dependency>
                   <groupId>com.intuit.graphql</groupId>
                   <artifactId>graphql-authorization-java</artifactId>
-                  <version>${GITHUB_REF_NAME#v}</version>
+                  <version>${VERSION}</version>
               </dependency>
-            </dependencies>
             ```
           draft: false
           prerelease: false
@@ -39,4 +44,4 @@ jobs:
         uses: auto-it/setup-auto@v1
 
       - name: Auto Release
-        run: auto changelog -d -q
+        run: auto release -d
