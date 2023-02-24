@@ -20,11 +20,11 @@ jobs:
           echo Version: $VERSION
           echo "VERSION=$VERSION" >> $GITHUB_ENV
 
-      - name: Auto Dry run
-        uses: auto-it/setup-auto@v1
-
-      - name: Auto Release
-        run: auto release -d
+#      - name: Auto Dry run
+#        uses: auto-it/setup-auto@v1
+#
+#      - name: Auto Release
+#        run: auto release -d
 
       - name: Create Release
         id: create_release
