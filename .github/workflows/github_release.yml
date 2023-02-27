@@ -14,6 +14,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: "✏️ Generate full changelog"
+        id: generate-changelog
+        uses: ./
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          headerLabel: "# 📑 Changelog"
+
+          breakingLabel: '### 💥 Breaking'
+          breakingLabels:
+            - breaking
+
+          enhancementLabel: '### 🚀 Enhancements'
+          enhancementLabels:
+            - enhancement
+            -
+          bugsLabel: '### 🐛 Bug fixes'
+          bugLabels:
+            - bug
+
+          securityLabel: '### 🛡️ Security'
+          securityLabels:
+            - security
+
+          issuesLabel: '### 📁 Other issues'
+          prLabel: '### 📁 Other pull requests'
+          issues: true
+          issuesWoLabels: true
+          pullRequests: true
+          prWoLabels: true
+          author: true
+          unreleased: true
+          compareLink: true
+          stripGeneratorNotice: true
+          verbose: true
+
+      - name: Print changelog
+        run: |
+          echo ${{ steps.generate-changelog.outputs.changelog }}
+
       - name: Write release version
         id: calculate_version
         run: |
@@ -43,6 +82,8 @@ jobs:
                   <artifactId>graphql-authorization-java</artifactId>
                   <version>${{ steps.calculate_version.outputs.version }}</version>
               </dependency>
+            
+            ${{ steps.generate-changelog.outputs.changelog }}
             ```
           draft: false
           prerelease: false
