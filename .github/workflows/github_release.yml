@@ -14,6 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Get previous tag
+        id: get_previous_tag
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=1 --max-count=1))
+          echo Version: $PREVIOUS_TAG
+          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
+
       - name: "✏️ Generate full changelog"
         id: generate-changelog
         uses: heinrichreimer/github-changelog-generator-action@v2.3
@@ -44,7 +51,7 @@ jobs:
           compareLink: true
           stripGeneratorNotice: true
           verbose: true
-          onlyLastTag: true
+          sinceTag: ${{ steps.get_previous_tag.outputs.previous_tag }}"
           stripHeaders: true
 
       - name: Print changelog
