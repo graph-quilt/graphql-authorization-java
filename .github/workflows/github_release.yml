@@ -45,6 +45,7 @@ jobs:
           stripGeneratorNotice: true
           verbose: true
           onlyLastTag: true
+          stripHeaders: true
 
       - name: Print changelog
         run: |
