@@ -16,7 +16,6 @@ jobs:
 
       - name: "✏️ Generate full changelog"
         id: generate-changelog
-        uses: ./
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           headerLabel: "# 📑 Changelog"
