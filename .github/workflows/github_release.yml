@@ -44,6 +44,7 @@ jobs:
           compareLink: true
           stripGeneratorNotice: true
           verbose: true
+          onlyLastTag: true
 
       - name: Print changelog
         run: |
