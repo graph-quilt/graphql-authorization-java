@@ -28,7 +28,7 @@ jobs:
           enhancementLabel: '### 🚀 Enhancements'
           enhancementLabels:
             - enhancement
-            -
+
           bugsLabel: '### 🐛 Bug fixes'
           bugLabels:
             - bug
