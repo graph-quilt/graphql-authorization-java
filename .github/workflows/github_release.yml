@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: "✏️ Generate full changelog"
         id: generate-changelog
@@ -49,7 +49,7 @@ jobs:
         run: |
           echo ${{ steps.generate-changelog.outputs.changelog }}
 
-      - name: Write release version
+      - name: Calculate release version
         id: calculate_version
         run: |
           VERSION=${GITHUB_REF_NAME#v}
