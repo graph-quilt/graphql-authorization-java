@@ -21,7 +21,7 @@ has access to some of the requested fields/types will return:
 ```json lines
  "errors": [
     {
-      "message": "403 - Not authorized to access field=amendBalanceDueAmt of type=Irs1040Type",
+      "message": "403 - Not authorized to access field=accountId of type=AccountType",
       ...
     },
 ```
