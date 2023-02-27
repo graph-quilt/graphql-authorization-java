@@ -51,7 +51,7 @@ jobs:
           compareLink: true
           stripGeneratorNotice: true
           verbose: true
-          sinceTag: ${{ steps.get_previous_tag.outputs.previous_tag }}"
+          sinceTag: ${{ steps.get_previous_tag.outputs.previous_tag }}
           stripHeaders: true
 
       - name: Print changelog
