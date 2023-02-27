@@ -65,12 +65,6 @@ jobs:
           echo Version: $VERSION
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-#      - name: Auto Dry run
-#        uses: auto-it/setup-auto@v1
-#
-#      - name: Auto Release
-#        run: auto release -d
-
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
