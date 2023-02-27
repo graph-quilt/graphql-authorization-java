@@ -17,7 +17,7 @@ jobs:
       - name: Get previous tag
         id: get_previous_tag
         run: |
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 $(git rev-list --tags --skip=2 --max-count=1))
+          PREVIOUS_TAG=$(git tag | sort --version-sort | tail -n2 | sed -n '1p')
           echo Version: $PREVIOUS_TAG
           echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_OUTPUT
 
