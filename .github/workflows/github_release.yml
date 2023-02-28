@@ -1,0 +1,87 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Github Release
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: "✏️ Generate full changelog"
+        id: generate-changelog
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          headerLabel: "# 📑 Changelog"
+
+          breakingLabel: '### 💥 Breaking'
+          breakingLabels: breaking
+
+          enhancementLabel: '### 🚀 Enhancements'
+          enhancementLabels: enhancement
+
+          bugsLabel: '### 🐛 Bug fixes'
+          bugLabels: bug
+
+          securityLabel: '### 🛡️ Security'
+          securityLabels: security
+
+          issuesLabel: '### 📁 Other issues'
+          prLabel: '### 📁 Other pull requests'
+          issues: true
+          issuesWoLabels: true
+          pullRequests: true
+          prWoLabels: true
+          author: true
+          unreleased: true
+          compareLink: true
+          stripGeneratorNotice: true
+          verbose: true
+          onlyLastTag: true
+          stripHeaders: true
+
+      - name: Print changelog
+        run: |
+          echo ${{ steps.generate-changelog.outputs.changelog }}
+
+      - name: Calculate release version
+        id: calculate_version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo Version: $VERSION
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      #      - name: Auto Dry run
+      #        uses: auto-it/setup-auto@v1
+      #
+      #      - name: Auto Release
+      #        run: auto release -d
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: |
+            ### Usage in pom.xml file 
+            ``` 
+              <dependency>
+                  <groupId>com.intuit.graphql</groupId>
+                  <artifactId>graphql-authorization-java</artifactId>
+                  <version>${{ steps.calculate_version.outputs.version }}</version>
+              </dependency>
+            
+            ${{ steps.generate-changelog.outputs.changelog }}
+            ```
+          draft: false
+          prerelease: false
