@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class HelperGraphQLDataFetchers {
 
-  private static List<Map<String, String>> books = new ArrayList<Map<String, String>>(
+  private static List<Map<String, Object>> books = new ArrayList<>(
       Arrays.asList(ImmutableMap.of("id", "book-1",
           "name", "Harry Potter and the Philosopher's Stone",
           "pageCount", "223",
@@ -25,7 +25,7 @@ public class HelperGraphQLDataFetchers {
               "pageCount", "371",
               "authorId", "author-3")));
 
-  private static List<Map<String, String>> authors = new ArrayList<Map<String, String>>(
+  private static List<Map<String, Object>> authors = new ArrayList<>(
       Arrays.asList(ImmutableMap.of("id", "author-1",
           "firstName", "Joanne",
           "lastName", "Rowling"),
@@ -37,7 +37,7 @@ public class HelperGraphQLDataFetchers {
               "lastName", "Rice")
       ));
 
-  private static List<Map<String, String>> ratings = Arrays.asList(
+  private static List<Map<String, Object>> ratings = Arrays.asList(
       ImmutableMap.of("id", "book-1",
           "comments", "Good",
           "stars", "4"),
@@ -130,7 +130,7 @@ public class HelperGraphQLDataFetchers {
     return dataFetchingEnvironment -> {
       Map<String, String> book = dataFetchingEnvironment.getArgument("input");
       String bookId = book.get("id");
-      Map<String, String> b = books
+      Map<String, Object> b = books
           .stream()
           .filter(book1 -> book1.get("id").equals(bookId))
           .findFirst()

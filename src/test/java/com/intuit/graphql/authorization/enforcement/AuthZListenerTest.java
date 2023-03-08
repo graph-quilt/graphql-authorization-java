@@ -11,7 +11,6 @@ import graphql.GraphQL;
 import graphql.analysis.QueryVisitorFieldEnvironment;
 import graphql.execution.ExecutionContext;
 import graphql.schema.GraphQLSchema;
-import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,7 +27,7 @@ public class AuthZListenerTest {
 
 
   @Before
-  public void init() throws IOException {
+  public void init()  {
 
     requestAllFields = HelperUtils.readString("queries/requestAllFields.graphql");
     requestWithFragments = HelperUtils.readString("queries/requestWithFragments.graphql");
@@ -40,8 +39,13 @@ public class AuthZListenerTest {
 
     authzListener = new TestAuthZListener();
     authzClientConfiguration = new HelperAuthzClientConfiguration();
-    instrumentation = new AuthzInstrumentation(authzClientConfiguration, executableSchema, new HelperPrincipleFetcher(),
-        authzListener);
+    instrumentation = AuthzInstrumentation.builder()
+        .configuration(authzClientConfiguration)
+        .schema(executableSchema)
+        .scopeProvider(new HelperScopeProvider())
+        .authzListener(authzListener)
+        .build();
+
 
     GraphQL.Builder builder = GraphQL.newGraphQL(executableSchema);
     builder.instrumentation(instrumentation);
@@ -121,12 +125,12 @@ public class AuthZListenerTest {
     ExecutionInput executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("").build();
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals(
-        "{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman, lastName=Melville}, rating={__typename=Rating, comments=Excellent, stars=5}}}"));
+    assertTrue(result.getErrors().size() == 1);
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=bookById of type=Query"));
+    assertEquals(authzListener.countOnFieldRedaction, 1);
     assertEquals(authzListener.countOnEnforcement, 1);
     assertEquals(authzListener.countOnCreatingState, 1);
-    assertEquals(authzListener.countOnFieldRedaction, 0);
   }
 
 
@@ -158,12 +162,12 @@ public class AuthZListenerTest {
     }
 
     @Override
-    public void onCreatingState(boolean isEnforce, GraphQLSchema schema, ExecutionInput executionInput) {
+    public void onCreatingState(GraphQLSchema schema, ExecutionInput executionInput) {
       countOnCreatingState = countOnCreatingState + 1;
     }
 
     @Override
-    public void onEnforcement(boolean isEnforce, ExecutionContext originalExecutionContext,
+    public void onEnforcement(ExecutionContext originalExecutionContext,
         ExecutionContext enforcedExecutionContext) {
       countOnEnforcement = countOnEnforcement + 1;
     }

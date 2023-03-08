@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.intuit.graphql.authorization.config.AuthzClient;
-import com.intuit.graphql.authorization.config.AuthzClient.ClientAuthorizationType;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLSchema;
 import java.util.Arrays;
@@ -34,7 +33,6 @@ public class AuthorizationHolderFactoryTest {
 
     AuthzClient client = new AuthzClient();
     client.setId("test-id");
-    client.setType(ClientAuthorizationType.OFFLINE);
 
     queriesByClient.put(client, Collections.singletonList("test-query"));
 
@@ -57,7 +55,6 @@ public class AuthorizationHolderFactoryTest {
 
     AuthzClient client = new AuthzClient();
     client.setId("test-id");
-    client.setType(ClientAuthorizationType.OFFLINE);
 
     queriesByClient.put(client, Collections.singletonList("query { thisIsInValidField }"));
 
@@ -86,7 +83,6 @@ public class AuthorizationHolderFactoryTest {
     Map<AuthzClient, List<String>> queriesByClient = new HashMap<>();
     AuthzClient client = new AuthzClient();
     client.setId("test-id");
-    client.setType(ClientAuthorizationType.OFFLINE);
 
     List<String> queries = Arrays.asList("test-query", "second-query");
     queriesByClient.put(client, queries);
@@ -116,7 +112,6 @@ public class AuthorizationHolderFactoryTest {
     Map<AuthzClient, List<String>> queriesByClient = new HashMap<>();
     AuthzClient client = new AuthzClient();
     client.setId("test-id");
-    client.setType(ClientAuthorizationType.OFFLINE);
 
     List<String> queries = Collections.singletonList("test-query");
     queriesByClient.put(client, queries);

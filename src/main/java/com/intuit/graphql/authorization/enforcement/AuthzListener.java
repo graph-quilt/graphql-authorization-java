@@ -20,19 +20,17 @@ public interface AuthzListener {
   /**
    * This will be called just before creating authz instrumentation state.
    *
-   * @param isEnforce boolean representing if policy will be enforced.
    * @param schema the graphql schema.
    * @param executionInput the execution input.
    */
-  void onCreatingState(final boolean isEnforce, final GraphQLSchema schema, final ExecutionInput executionInput);
+  void onCreatingState( final GraphQLSchema schema, final ExecutionInput executionInput);
 
   /**
    * This will be called after enforcing authz policy on the execution input if applicable.
    *
-   * @param isEnforce boolean representing if policy will be enforced.
    * @param originalExecutionContext execution context before authz policy is enforced.
    * @param enforcedExecutionContext execution context after authz policy is enforced.
    */
-  void onEnforcement(final boolean isEnforce, final ExecutionContext originalExecutionContext,
+  void onEnforcement(final ExecutionContext originalExecutionContext,
       final ExecutionContext enforcedExecutionContext);
 }

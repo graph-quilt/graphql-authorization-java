@@ -10,7 +10,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.intuit.graphql.authorization.config.AuthzClient;
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
-import com.intuit.graphql.authorization.util.PrincipleFetcher;
+import com.intuit.graphql.authorization.util.ScopeProvider;
 import com.intuit.graphql.authorization.util.TestStaticResources;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -40,7 +40,7 @@ public class AuthorizationTest {
   private ExecutionInput executionInput;
   private AuthzInstrumentation authzInstrumentation;
   private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration();
-  private PrincipleFetcher principleFetcher = new HelperPrincipleFetcher();
+  private ScopeProvider scopeProvider = new HelperScopeProvider();
   private GraphQLSchema schema;
   private GraphQL graphql;
   private String requestAllFields;
@@ -78,7 +78,13 @@ public class AuthorizationTest {
     String sdl = TestStaticResources.TEST_SCHEMA;
     schema = HelperBuildTestSchema.buildSchema(sdl);
 
-    authzInstrumentation = new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null);
+    authzInstrumentation = AuthzInstrumentation.builder()
+        .configuration(authzClientConfiguration)
+        .schema(schema)
+        .scopeProvider(scopeProvider)
+        .authzListener(null)
+        .build();
+
     GraphQL.Builder builder = GraphQL.newGraphQL(schema);
     builder.instrumentation(authzInstrumentation);
     graphql = builder.build();
@@ -112,7 +118,12 @@ public class AuthorizationTest {
       }
     };
     Assertions
-        .assertThatThrownBy(() -> new AuthzInstrumentation(authzClientConfiguration, schema, principleFetcher, null))
+        .assertThatThrownBy(() ->  AuthzInstrumentation.builder()
+            .configuration(authzClientConfiguration)
+            .schema(schema)
+            .scopeProvider(new HelperScopeProvider())
+            .build())
+
         .isInstanceOf(IllegalArgumentException.class).hasMessage("Clients missing from AuthZClientConfiguration");
   }
 
@@ -184,9 +195,9 @@ public class AuthorizationTest {
     executionInput = ExecutionInput.newExecutionInput().query(requestAllFields).context("").build();
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals(
-        "{bookById={__typename=Book, id=book-2, name=Moby Dick, pageCount=635, author={__typename=Author, firstName=Herman, lastName=Melville}, rating={__typename=Rating, comments=Excellent, stars=5}}}"));
+    assertTrue(result.getErrors().size() == 1);
+    assertTrue(
+        result.getErrors().get(0).getMessage().contains("403 - Not authorized to access field=bookById of type=Query"));
   }
 
   @Test
@@ -281,9 +292,13 @@ public class AuthorizationTest {
     executionInput = ExecutionInput.newExecutionInput().query(mutationQuery).context("").build();
     ExecutionResult result = graphql.execute(executionInput);
 
-    assertTrue(result.getErrors().size() == 0);
-    assertTrue(result.getData().toString().equals(
-        "{createNewBookRecord={id=Book-7, name=New World, pageCount=1001, author={firstName=Mickey, lastName=Mouse}}, updateBookRecord={id=book-3}, removeBookRecord={id=book-1}}"));
+    assertTrue(result.getErrors().get(0).getMessage()
+        .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(1).getMessage()
+        .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation"));
+    assertTrue(result.getErrors().get(2).getMessage()
+        .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation"));
+    assertTrue(result.getData().toString().equals("{}"));
   }
 
   @Test
@@ -368,24 +383,17 @@ public class AuthorizationTest {
     assertTrue(jsonres.getAsJsonObject().get("mutationType").toString().equals("{\"name\":\"Mutation\"}"));
 
     JsonArray types = (JsonArray) jsonres.getAsJsonObject().get("types");
-    assertTrue(types.size() == 20);
+    assertTrue(types.size() == 15);
 
-    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Author"));
-    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Book"));
-    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Query"));
-    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Mutation"));
-    assertTrue(hasValue(types, "kind", "OBJECT", "name", "Rating"));
+    assertTrue(!hasValue(types, "kind", "OBJECT", "name", "Author"));
+    assertTrue(!hasValue(types, "kind", "OBJECT", "name", "Book"));
+    assertTrue(!hasValue(types, "kind", "OBJECT", "name", "Query"));
+    assertTrue(!hasValue(types, "kind", "OBJECT", "name", "Mutation"));
+    assertTrue(!hasValue(types, "kind", "OBJECT", "name", "Rating"));
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID"));
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput"));
     assertTrue(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput"));
 
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById", "allBooks")));
-    assertTrue(
-        CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("id", "firstName", "lastName")));
-    assertTrue(CollectionUtils
-        .isEqualCollection(getFields(types, "Book"), Arrays.asList("id", "name", "pageCount", "author", "rating")));
-    assertTrue(CollectionUtils.isEqualCollection(getFields(types, "Mutation"),
-        Arrays.asList("createNewBookRecord", "updateBookRecord", "removeBookRecord")));
   }
 
   @Test

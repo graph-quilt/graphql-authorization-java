@@ -21,7 +21,6 @@ mutation {
       id: "book-3",
       name: "test updates",
       pageCount: 100
-
     }) {
       id
     }
