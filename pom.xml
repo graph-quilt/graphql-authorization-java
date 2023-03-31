@@ -41,7 +41,7 @@
     <jacoco.enabled>true</jacoco.enabled>
     <jacoco.version>0.8.4</jacoco.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-    <jackson.version>2.13.4</jackson.version>
+    <jackson.version>2.13.4.2</jackson.version>
   </properties>
 
   <profiles>
