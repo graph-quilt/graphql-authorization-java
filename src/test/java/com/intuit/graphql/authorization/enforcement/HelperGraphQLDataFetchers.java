@@ -117,7 +117,7 @@ public class HelperGraphQLDataFetchers {
       String bookId = book.get("id");
       books.add(ImmutableMap.of("id", bookId,
           "name", book.get("name"),
-          "pageCount", book.get("pageCount")));
+          "pageCount", String.valueOf(book.get("pageCount"))));
       return books
           .stream()
           .filter(book1 -> book1.get("id").equals(bookId))
