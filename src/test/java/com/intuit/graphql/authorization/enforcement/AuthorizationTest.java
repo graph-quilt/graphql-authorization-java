@@ -219,7 +219,7 @@ public class AuthorizationTest {
     assertTrue(result.getErrors().size() == 1);
     assertNull(result.getData());
     assertTrue(result.getErrors().get(0).getMessage().contains(
-        "Validation error of type FieldUndefined: Field 'userName' in type 'Book' is undefined @ 'bookById/userName'"));
+        "Validation error (FieldUndefined@[bookById/userName]) : Field 'userName' in type 'Book' is undefined"));
   }
 
   @Test
