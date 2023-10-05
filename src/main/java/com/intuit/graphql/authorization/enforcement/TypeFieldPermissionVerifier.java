@@ -20,8 +20,7 @@ public class TypeFieldPermissionVerifier implements PermissionVerifier {
   private final Map<String, Set<String>> typeToFieldsMap;
   private final GraphQLSchema schema;
 
-  TypeFieldPermissionVerifier(GraphQLSchema schema,
-      Map<String, Set<String>> typeToFieldsMap) {
+  TypeFieldPermissionVerifier(GraphQLSchema schema, Map<String, Set<String>> typeToFieldsMap) {
     this.typeToFieldsMap = typeToFieldsMap;
     this.schema = schema;
   }

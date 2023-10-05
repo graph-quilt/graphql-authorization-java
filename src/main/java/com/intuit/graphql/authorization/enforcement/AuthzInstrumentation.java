@@ -1,5 +1,7 @@
 package com.intuit.graphql.authorization.enforcement;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+
 import com.intuit.graphql.authorization.config.AuthzClientConfiguration;
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.AuthorizationExtensionProvider;
@@ -7,7 +9,7 @@ import com.intuit.graphql.authorization.extension.DefaultAuthorizationExtensionP
 import com.intuit.graphql.authorization.rules.AuthorizationHolderFactory;
 import com.intuit.graphql.authorization.rules.QueryRuleParser;
 import com.intuit.graphql.authorization.util.GraphQLUtil;
-import com.intuit.graphql.authorization.util.PrincipleFetcher;
+import com.intuit.graphql.authorization.util.ScopeProvider;
 import graphql.ExecutionResult;
 import graphql.ExecutionResultImpl;
 import graphql.GraphQLError;
@@ -26,13 +28,15 @@ import graphql.schema.GraphQLSchema;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -43,27 +47,30 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   private static final AuthzListener DEFAULT_AUTHZ_LISTENER = new SimpleAuthZListener();
   private static final AuthorizationExtensionProvider DEFAULT_AUTH_EXTENSION_PROVIDER = new DefaultAuthorizationExtensionProvider();
   private final AuthorizationHolder authorizationHolder;
-  private final PrincipleFetcher principleFetcher;
-  private AuthzListener authzListener = DEFAULT_AUTHZ_LISTENER;
-  private final AuthorizationExtensionProvider authorizationExtensionProvider;
+  private final ScopeProvider scopeProvider;
 
-  public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,
-      PrincipleFetcher principleFetcher, AuthzListener authzListener,
+  @Default
+  private AuthzListener authzListener = DEFAULT_AUTHZ_LISTENER;
+  @Default
+  private AuthorizationExtensionProvider authorizationExtensionProvider = DEFAULT_AUTH_EXTENSION_PROVIDER;
+
+  @Builder
+  public AuthzInstrumentation(
+      @NonNull AuthzClientConfiguration configuration,
+      @NonNull GraphQLSchema schema,
+      @NonNull ScopeProvider scopeProvider,
+      AuthzListener authzListener,
       AuthorizationExtensionProvider authorizationExtensionProvider) {
+
     if (configuration.getQueriesByClient().isEmpty()) {
       throw new IllegalArgumentException("Clients missing from AuthZClientConfiguration");
     }
 
     this.authorizationHolder = new AuthorizationHolder(
         getAuthorizationFactory(schema).parse(configuration.getQueriesByClient()));
-    this.principleFetcher = principleFetcher;
-    this.authzListener = (Objects.nonNull(authzListener)) ? authzListener : DEFAULT_AUTHZ_LISTENER;
-    this.authorizationExtensionProvider = authorizationExtensionProvider;
-  }
-
-  public AuthzInstrumentation(AuthzClientConfiguration configuration, GraphQLSchema schema,
-      PrincipleFetcher principleFetcher, AuthzListener authzListener) {
-    this(configuration, schema, principleFetcher, authzListener, DEFAULT_AUTH_EXTENSION_PROVIDER);
+    this.scopeProvider = scopeProvider;
+    this.authzListener = defaultIfNull(authzListener, DEFAULT_AUTHZ_LISTENER);
+    this.authorizationExtensionProvider = defaultIfNull(authorizationExtensionProvider, DEFAULT_AUTH_EXTENSION_PROVIDER);
   }
 
   static AuthorizationHolderFactory getAuthorizationFactory(GraphQLSchema graphQLSchema) {
@@ -77,17 +84,11 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
     // instrumentation state is passed during each invocation of an Instrumentation method
     // and allows you to put stateful data away and reference it during the query execution
     //
-    Set<String> scopes = principleFetcher.getScopes(parameters.getExecutionInput().getContext());
+    Set<String> scopes = scopeProvider.getScopes(parameters.getExecutionInput().getContext());
 
-    //TODO: externalize enforcement open or close decision
-    boolean enforce =
-        !principleFetcher.authzEnforcementExemption(parameters.getExecutionInput().getContext())
-            && CollectionUtils.isNotEmpty(scopes);
-
-    authzListener.onCreatingState(enforce, parameters.getSchema(), parameters.getExecutionInput());
-    return new AuthzInstrumentationState(
-        authorizationHolder.getPermissionsVerifier(scopes, parameters.getSchema()),
-        parameters.getSchema(), scopes, enforce);
+    authzListener.onCreatingState(parameters.getSchema(), parameters.getExecutionInput());
+    return new AuthzInstrumentationState(authorizationHolder.getPermissionsVerifier(scopes, parameters.getSchema()),
+        parameters.getSchema(), scopes);
   }
 
 
@@ -95,10 +96,11 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   public ExecutionContext instrumentExecutionContext(ExecutionContext executionContext,
       InstrumentationExecutionParameters parameters) {
     AuthzInstrumentationState state = parameters.getInstrumentationState();
-    AuthorizationExtension authorizationExtension = this.authorizationExtensionProvider.getAuthorizationExtension(executionContext, parameters);
-    ExecutionContext enforcedExecutionContext =
-        state.isEnforce() ? getAuthzExecutionContext(executionContext, state, authorizationExtension) : executionContext;
-    authzListener.onEnforcement(state.isEnforce(), executionContext, enforcedExecutionContext);
+    AuthorizationExtension authorizationExtension = this.authorizationExtensionProvider.getAuthorizationExtension(
+        executionContext, parameters);
+    ExecutionContext enforcedExecutionContext = getAuthzExecutionContext(executionContext, state,
+        authorizationExtension);
+    authzListener.onEnforcement(executionContext, enforcedExecutionContext);
     return enforcedExecutionContext;
   }
 
@@ -142,10 +144,11 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         .fragmentsByName(executionContext.getFragmentsByName());
   }
 
-  Map<String, FragmentDefinition> redactFragments(ExecutionContext executionContext, AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
+  Map<String, FragmentDefinition> redactFragments(ExecutionContext executionContext, AuthzInstrumentationState state,
+      AuthorizationExtension authorizationExtension) {
     //treat each fragment as root and redact based on configuration
     return executionContext.getFragmentsByName().values().stream().map(entry ->
-        redactFragment(entry, executionContext, state, authorizationExtension))
+            redactFragment(entry, executionContext, state, authorizationExtension))
         .collect(Collectors.toMap(FragmentDefinition::getName, Function.identity()));
   }
 
@@ -163,7 +166,8 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   }
 
 
-  SelectionSet redactSelectionSet(ExecutionContext executionContext, AuthzInstrumentationState state, AuthorizationExtension authorizationExtension) {
+  SelectionSet redactSelectionSet(ExecutionContext executionContext, AuthzInstrumentationState state,
+      AuthorizationExtension authorizationExtension) {
     GraphQLObjectType rootType = GraphQLUtil.getRootTypeFromOperation(executionContext.getOperationDefinition(),
         executionContext.getGraphQLSchema());
 
@@ -181,7 +185,7 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
   public DataFetcher<?> instrumentDataFetcher(DataFetcher<?> dataFetcher,
       InstrumentationFieldFetchParameters parameters) {
     AuthzInstrumentationState state = parameters.getInstrumentationState();
-    return state.isEnforce() ? new IntrospectionRedactingDataFetcher(dataFetcher, state) : dataFetcher;
+    return new IntrospectionRedactingDataFetcher(dataFetcher, state);
   }
 
   @Data
@@ -191,7 +195,6 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
     private final TypeFieldPermissionVerifier typeFieldPermissionVerifier;
     private final GraphQLSchema graphQLSchema;
     private final Set<String> scopes;
-    private final boolean enforce;
     private List<GraphQLError> authzErrors = new LinkedList<>();
   }
 

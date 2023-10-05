@@ -2,14 +2,14 @@ package com.intuit.graphql.authorization.context;
 
 import static org.junit.Assert.assertTrue;
 
-import com.intuit.graphql.authorization.util.PrincipleFetcher;
+import com.intuit.graphql.authorization.util.ScopeProvider;
 import graphql.schema.GraphQLObjectType;
 import org.junit.Test;
 import org.mockito.Mock;
 
 public class ExecutionScopeFetcherTest {
 
-  PrincipleFetcher principleFetcher = new PrincipleFetcher() {
+  ScopeProvider scopeProvider = new ScopeProvider() {
   };
 
   @Mock
@@ -19,7 +19,7 @@ public class ExecutionScopeFetcherTest {
   @Test
   public void getScopesByDefault() {
 
-    assertTrue(principleFetcher.getScopes(graphQLObjectType).isEmpty());
+    assertTrue(scopeProvider.getScopes(graphQLObjectType).isEmpty());
 
   }
 

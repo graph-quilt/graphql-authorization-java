@@ -18,9 +18,7 @@ public class AuthorizationHolder {
     this.scopeToTypeMap = Collections.unmodifiableMap(scopeToType);
   }
 
-
   public TypeFieldPermissionVerifier getPermissionsVerifier(Set<String> scopes, GraphQLSchema schema) {
-
     return new TypeFieldPermissionVerifier(schema,
         Collections.unmodifiableMap(
             scopes.stream()
@@ -31,5 +29,4 @@ public class AuthorizationHolder {
                     (oldSet, newSet) -> SetUtils.union(oldSet, newSet)
                 ))));
   }
-
 }

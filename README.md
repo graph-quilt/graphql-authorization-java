@@ -52,7 +52,7 @@ has access to some of the requested fields/types will return:
 
  ```java
  GraphQL.newGraphQL(schema)
-       .instrumentation(new AuthzInstrumentation(authzConfiguration, schema, principleFetcher))
+       .instrumentation(new AuthzInstrumentation(authzConfiguration, schema, scopeProvider))
        .build();
  ```
 

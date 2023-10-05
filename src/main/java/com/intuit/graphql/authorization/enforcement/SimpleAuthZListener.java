@@ -14,12 +14,12 @@ public class SimpleAuthZListener implements AuthzListener {
   }
 
   @Override
-  public void onCreatingState(boolean isEnforce, GraphQLSchema schema, ExecutionInput executionInput) {
+  public void onCreatingState(GraphQLSchema schema, ExecutionInput executionInput) {
     //do nothing
   }
 
   @Override
-  public void onEnforcement(boolean isEnforce, ExecutionContext originalExecutionContext,
+  public void onEnforcement(ExecutionContext originalExecutionContext,
       ExecutionContext enforcedExecutionContext) {
     //do nothing
   }
