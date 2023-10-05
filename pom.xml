@@ -37,11 +37,11 @@
   <properties>
     <junit5.version>5.5.0</junit5.version>
     <lombok.version>1.18.8</lombok.version>
-    <graphql-java.version>17.4</graphql-java.version>
+    <graphql-java.version>20.4</graphql-java.version>
     <jacoco.enabled>true</jacoco.enabled>
     <jacoco.version>0.8.4</jacoco.version>
     <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-    <jackson.version>2.13.4</jackson.version>
+    <jackson.version>2.13.5</jackson.version>
   </properties>
 
   <profiles>
@@ -199,7 +199,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>29.0-jre</version>
+      <version>32.0.0-jre</version>
       <scope>test</scope>
     </dependency>
     <dependency>
