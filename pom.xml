@@ -177,33 +177,6 @@
             <jacoco-agent.destfile>${project.build.directory}/coverage.exec</jacoco-agent.destfile>
           </systemPropertyVariables>
         </configuration>
-        <dependencies>
-<!--          <dependency>-->
-<!--            <groupId>org.codehaus.groovy</groupId>-->
-<!--            <artifactId>groovy-all</artifactId>-->
-<!--            <version>3.0.7</version>-->
-<!--          </dependency>-->
-        </dependencies>
-        <executions>
-          <execution>
-            <id>test</id>
-            <phase>test</phase>
-            <goals>
-              <goal>test</goal>
-            </goals>
-            <configuration>
-              <includes>
-<!--                <include>**/*Test.java</include>-->
-                <include>**/*Test.groovy</include>
-              </includes>
-<!--              <testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>-->
-              <testSourceDirectory>${project.basedir}/src/test/groovy</testSourceDirectory>
-              <systemPropertyVariables>
-                <groovy.test.source.directory>${project.basedir}/src/test/groovy</groovy.test.source.directory>
-              </systemPropertyVariables>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
