@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class AuthorizationTest extends Specification{
 
-    private ExecutionInput executionInput;
     private AuthzInstrumentation authzInstrumentation;
     private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration();
     private ScopeProvider scopeProvider = new HelperScopeProvider();
