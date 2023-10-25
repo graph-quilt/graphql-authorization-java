@@ -1,6 +1,6 @@
 package com.intuit.graphql.authorization.enforcement
 
-import com.google.gson.Gson;
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -14,12 +14,9 @@ import graphql.GraphQL
 import graphql.introspection.IntrospectionQuery
 import graphql.schema.GraphQLSchema
 import java.util.stream.Collectors
-import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Before
 import org.junit.Test
 import spock.lang.Specification
-
-import static org.assertj.core.api.Assertions.assertThat
 
 class AuthorizationTest extends Specification{
 
