@@ -19,8 +19,6 @@ import org.junit.Before
 import org.junit.Test
 import spock.lang.Specification
 
-
-import java.nio.charset.StandardCharsets
 import static org.assertj.core.api.Assertions.assertThat
 
 class AuthorizationTest extends Specification{
@@ -152,18 +150,16 @@ class AuthorizationTest extends Specification{
 
         then:
         def errors = result.getErrors().collect { it.getMessage() }
-        assertThat(errors).contains(
-                "403 - Not authorized to access field=lastName of type=Author",
-                "403 - Not authorized to access field=pageCount of type=Book",
-                "403 - Not authorized to access field=rating of type=Book"
-        )
-
         def data = result.getData().toString()
-        assertThat(data).contains(
-                "[id:book-1, name:Harry Potter and the Philosopher's Stone, author:[firstName:Joanne]]",
-                "[id:book-2, name:Moby Dick, author:[firstName:Herman]]",
-                "[id:book-3, name:Interview with the vampire, author:[firstName:Anne]]"
-        )
+
+        expect:
+        errors.contains("403 - Not authorized to access field=lastName of type=Author")
+        errors.contains("403 - Not authorized to access field=pageCount of type=Book")
+        errors.contains("403 - Not authorized to access field=rating of type=Book")
+
+        data.contains("[id:book-1, name:Harry Potter and the Philosopher's Stone, author:[firstName:Joanne]]")
+        data.contains("[id:book-2, name:Moby Dick, author:[firstName:Herman]]")
+        data.contains("[id:book-3, name:Interview with the vampire, author:[firstName:Anne]]")
     }
 
     @Test
@@ -215,16 +211,15 @@ class AuthorizationTest extends Specification{
                 .context("Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
+        def dataString = result.data.toString()
 
-        then:
-        assertThat(result.errors[0].message)
-                .contains("403 - Not authorized to access field=lastName of type=Author")
-        assertThat(result.errors[1].message)
-                .contains("403 - Not authorized to access field=rating of type=Book")
-        assertThat(result.data.toString())
-                .isEqualTo("[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman]]]")
+        expect:
+        errors[0].message.contains("403 - Not authorized to access field=lastName of type=Author")
+        errors[1].message.contains("403 - Not authorized to access field=rating of type=Book")
+        dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman]]]"
     }
 
     @Test
@@ -247,13 +242,13 @@ class AuthorizationTest extends Specification{
                 .context("Test.client2")
                 .build();
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def dataString = result.data.toString()
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-        assertThat(result.data.toString())
-                .isEqualTo("[bookById:[id:book-2, name:Moby Dick, pageCount:635, author:[firstName:Herman]]]")
+        expect:
+        result.errors.size() == 0
+        dataString == "[bookById:[id:book-2, name:Moby Dick, pageCount:635, author:[firstName:Herman]]]"
     }
 
     @Test
@@ -284,13 +279,13 @@ class AuthorizationTest extends Specification{
                 .context("Test.client1")
                 .build()
 
-        when:
-        def result = graphql.execute(executionInput);\
+        and:
+        def result = graphql.execute(executionInput)
+        def dataString = result.data.toString()
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-        assertThat(result.data.toString())
-                .isEqualTo("[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman, lastName:Melville], rating:[__typename:Rating, comments:Excellent, stars:5]]]")
+        expect:
+        result.errors.size() == 0
+        dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman, lastName:Melville], rating:[__typename:Rating, comments:Excellent, stars:5]]]"
     }
 
     @Test
@@ -321,13 +316,13 @@ class AuthorizationTest extends Specification{
                 .context("Test.client1")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def dataString = result.data.toString()
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-        assertThat(result.data.toString())
-                .isEqualTo("[bookById:[id:book-3, name:Interview with the vampire, pageCount:371, author:[firstName:Anne, lastName:Rice], rating:[comments:OK, stars:3]]]")
+        expect:
+        result.errors.size() == 0
+        dataString == "[bookById:[id:book-3, name:Interview with the vampire, pageCount:371, author:[firstName:Anne, lastName:Rice], rating:[comments:OK, stars:3]]]"
 
     }
 
@@ -359,12 +354,13 @@ class AuthorizationTest extends Specification{
                 .context("")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(1)
-        assertThat(result.errors[0].getMessage()).contains("403 - Not authorized to access field=bookById of type=Query")
+        expect:
+        errors.size() == 1
+        errors[0].getMessage() == "403 - Not authorized to access field=bookById of type=Query"
     }
 
     @Test
@@ -395,12 +391,13 @@ class AuthorizationTest extends Specification{
                 .context("INV001")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(1)
-        assertThat(result.errors[0].getMessage()).contains("403 - Not authorized to access field=bookById of type=Query")
+        expect:
+        errors.size() == 1
+        errors[0].getMessage() == "403 - Not authorized to access field=bookById of type=Query"
     }
 
     @Test
@@ -431,14 +428,14 @@ class AuthorizationTest extends Specification{
                 .context("Test.client3,Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
+        def dataString = result.data.toString()
 
-        then:
-        assertThat(result.errors[0].getMessage())
-                .contains("403 - Not authorized to access field=lastName of type=Author")
-        assertThat(result.data.toString())
-                .isEqualTo("[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman], rating:[__typename:Rating, comments:Excellent, stars:5]]]")
+        expect:
+        errors[0].getMessage().contains("403 - Not authorized to access field=lastName of type=Author")
+        dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman], rating:[__typename:Rating, comments:Excellent, stars:5]]]"
     }
 
     @Test
@@ -461,14 +458,14 @@ class AuthorizationTest extends Specification{
                 .context("Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(1)
-        assertThat(result.getData()).isNull()
-        assertThat(result.errors[0].getMessage())
-                .contains("Validation error (FieldUndefined@[bookById/userName]) : Field 'userName' in type 'Book' is undefined")
+        expect:
+        errors.size() == 1
+        result.data == null
+        errors[0].getMessage().contains("Validation error (FieldUndefined@[bookById/userName]) : Field 'userName' in type 'Book' is undefined")
     }
 
     @Test
@@ -479,18 +476,16 @@ class AuthorizationTest extends Specification{
                 .context("Test.client4")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(3)
-        assertThat( result.errors[0].getMessage()).contains("403 - Not authorized to access field=pageCount of type=Book")
-        assertThat(result.errors[1].getMessage())
-                .contains("403 - Not authorized to access field=lastName of type=Author")
-        assertThat(result.errors[2].getMessage())
-                .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
-        assertThat(result.data.toString())
-                .isEqualTo("[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]")
+        expect:
+        errors.size() == 3
+        errors[0].getMessage().contains("403 - Not authorized to access field=pageCount of type=Book")
+        errors[1].getMessage().contains("403 - Not authorized to access field=lastName of type=Author")
+        errors[2].getMessage().contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
+        result.data.toString() == "[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]"
     }
 
     @Test
@@ -501,15 +496,14 @@ class AuthorizationTest extends Specification{
                 .context("Test.client4,Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.data.toString())
-                .isEqualTo("[createNewBookRecord:[id:Book-7, name:New World, pageCount:1001, author:[firstName:Mickey]], updateBookRecord:[id:book-3], removeBookRecord:[id:book-1]]")
-        assertThat(result.errors.size()).isEqualTo(1)
-        assertThat(result.errors[0].getMessage())
-                .contains("403 - Not authorized to access field=lastName of type=Author")
+        expect:
+        result.data.toString() == "[createNewBookRecord:[id:Book-7, name:New World, pageCount:1001, author:[firstName:Mickey]], updateBookRecord:[id:book-3], removeBookRecord:[id:book-1]]"
+        errors.size() == 1
+        errors[0].getMessage().contains("403 - Not authorized to access field=lastName of type=Author")
     }
 
     @Test
@@ -520,16 +514,15 @@ class AuthorizationTest extends Specification{
                 .context("CCC03,Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.data.toString()).isEqualTo("[updateBookRecord:[id:book-3]]")
-        assertThat(result.errors.size()).isEqualTo(2)
-        assertThat(result.errors[0].getMessage())
-                .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
-        assertThat(result.errors[1].getMessage())
-                .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
+        expect:
+        result.data.toString() == "[updateBookRecord:[id:book-3]]"
+        errors.size() == 2
+        errors[0].getMessage().contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
+        errors[1].getMessage().contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
     }
 
     def "test authz with mutation no access"() {
@@ -539,17 +532,15 @@ class AuthorizationTest extends Specification{
                 .context("CCC03")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors[0].message)
-                .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
-        assertThat(result.errors[1].message)
-                .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
-        assertThat(result.errors[2].message)
-                .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
-        assertThat(result.data.toString()).isEqualTo("[:]")
+        expect:
+        errors[0].message .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
+        errors[1].message.contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
+        errors[2].message.contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
+        result.data.toString() == "[:]"
     }
 
     def "test authz with mutation no scope"() {
@@ -559,17 +550,15 @@ class AuthorizationTest extends Specification{
                 .context("")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors[0].message)
-                .contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
-        assertThat(result.errors[1].message)
-                .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
-        assertThat(result.errors[2].message)
-                .contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
-        assertThat(result.data.toString()).isEqualTo("[:]")
+        expect:
+        errors[0].message.contains("403 - Not authorized to access field=createNewBookRecord of type=Mutation")
+        errors[1].message.contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
+        errors[2].message.contains("403 - Not authorized to access field=removeBookRecord of type=Mutation")
+        result.data.toString() == "[:]"
     }
 
     def "test authz with mutation and fragments"() {
@@ -579,19 +568,16 @@ class AuthorizationTest extends Specification{
                 .context("Test.client4")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(3)
-        assertThat(result.errors[1].message)
-                .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
-        assertThat(result.errors[0].message)
-                .contains("403 - Not authorized to access field=pageCount of type=Book")
-        assertThat(result.errors[2].message)
-                .contains("403 - Not authorized to access field=lastName of type=Author")
-        assertThat(result.data.toString())
-                .isEqualTo("[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]")
+        expect:
+        errors.size() == 3
+        errors[1].message.contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
+        errors[0].message.contains("403 - Not authorized to access field=pageCount of type=Book")
+        errors[2].message.contains("403 - Not authorized to access field=lastName of type=Author")
+        result.data.toString() == "[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]"
     }
 
     def "test authz with mutation non oauth2"() {
@@ -601,18 +587,16 @@ class AuthorizationTest extends Specification{
                 .context("Test.client5")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
+        def errors = result.errors
 
-        then:
-        assertThat(result.errors.size()).isEqualTo(3)
-        assertThat(result.errors[1].message)
-                .contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
-        assertThat(result.errors[0].message)
-                .contains("403 - Not authorized to access field=pageCount of type=Book")
-        assertThat(result.errors[2].message)
-                .contains("403 - Not authorized to access field=lastName of type=Author")
-        assertThat(result.data.toString()).isEqualTo("[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]")
+        expect:
+        errors.size() == 3
+        errors[1].message.contains("403 - Not authorized to access field=updateBookRecord of type=Mutation")
+        errors[0].message.contains("403 - Not authorized to access field=pageCount of type=Book")
+        errors[2].message.contains("403 - Not authorized to access field=lastName of type=Author")
+        result.data.toString() == "[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]"
     }
 
     def "test introspection with test client2"() {
@@ -622,36 +606,34 @@ class AuthorizationTest extends Specification{
                 .context("Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
-
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-
+        def errors = result.errors
         GsonBuilder builder = new GsonBuilder()
         Gson gson = builder.create()
         JsonElement res = gson.toJsonTree(result.toSpecification())
         JsonObject jsonres = res.getAsJsonObject().get("data").getAsJsonObject().get("__schema").getAsJsonObject()
-        assertThat(jsonres.size()).isEqualTo(4)
-
-        assertThat(jsonres.get("queryType").toString()).isEqualTo("{\"name\":\"Query\"}")
-        assertThat(jsonres.get("mutationType").toString()).isEqualTo("{\"name\":\"Mutation\"}")
-
         JsonArray types = jsonres.get("types").getAsJsonArray()
-        assertThat(types.size()).isEqualTo(19)
 
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Author")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Book")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Query")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Mutation")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput")).isTrue()
+        expect:
+        errors.size() == 0
+        jsonres.size() == 4
+        jsonres.get("queryType").toString() == "{\"name\":\"Query\"}"
+        jsonres.get("mutationType").toString() =="{\"name\":\"Mutation\"}"
+        types.size() == 19
 
-        assertThat(getFields(types, "Query")).containsExactly("bookById")
-        assertThat(getFields(types, "Author")).containsExactly("firstName")
-        assertThat(getFields(types, "Book")).containsExactly("id", "name", "pageCount", "author")
-        assertThat(getFields(types, "Mutation")).containsExactly("updateBookRecord")
+        hasValue(types, "kind", "OBJECT", "name", "Author").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Book").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Query").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Mutation").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput").booleanValue()
+
+        getFields(types, "Query") == ["bookById"]
+        getFields(types, "Author") == ["firstName"]
+        getFields(types, "Book") == ["id", "name", "pageCount", "author"]
+        getFields(types, "Mutation") == ["updateBookRecord"]
     }
 
     def "test introspection without scope"() {
@@ -661,31 +643,28 @@ class AuthorizationTest extends Specification{
                 .context("")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
-
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-
         GsonBuilder builder = new GsonBuilder()
         Gson gson = builder.create()
         JsonElement res = gson.toJsonTree(result.toSpecification())
         JsonObject jsonres = res.getAsJsonObject().get("data").getAsJsonObject().get("__schema").getAsJsonObject()
-        assertThat(jsonres.size()).isEqualTo(4)
-        assertThat(jsonres.get("queryType").toString()).isEqualTo("{\"name\":\"Query\"}")
-        assertThat(jsonres.get("mutationType").toString()).isEqualTo("{\"name\":\"Mutation\"}")
-
         JsonArray types = jsonres.get("types").getAsJsonArray()
-        assertThat(types.size()).isEqualTo(15)
 
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Author")).isFalse()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Book")).isFalse()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Query")).isFalse()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Mutation")).isFalse()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Rating")).isFalse()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput")).isTrue()
+        expect:
+        result.errors.size() == 0
+        jsonres.size() == 4
+        jsonres.get("queryType").toString() == "{\"name\":\"Query\"}"
+        jsonres.get("mutationType").toString() == "{\"name\":\"Mutation\"}"
+        types.size() == 15
+        ! hasValue(types, "kind", "OBJECT", "name", "Author").booleanValue()
+        ! hasValue(types, "kind", "OBJECT", "name", "Book").booleanValue()
+        ! hasValue(types, "kind", "OBJECT", "name", "Query").booleanValue()
+        ! hasValue(types, "kind", "OBJECT", "name", "Mutation").booleanValue()
+        ! hasValue(types, "kind", "OBJECT", "name", "Rating").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput").booleanValue()
     }
 
     def "test introspection with multi scopes"() {
@@ -695,35 +674,31 @@ class AuthorizationTest extends Specification{
                 .context("Test.client4,Test.client2")
                 .build()
 
-        when:
+        and:
         def result = graphql.execute(executionInput)
-
-        then:
-        assertThat(result.errors.size()).isEqualTo(0)
-
         GsonBuilder builder = new GsonBuilder()
         Gson gson = builder.create()
         JsonElement res = gson.toJsonTree(result.toSpecification())
         JsonObject jsonres = res.getAsJsonObject().get("data").getAsJsonObject().get("__schema").getAsJsonObject()
-        assertThat(jsonres.size()).isEqualTo(4)
-        assertThat(jsonres.get("queryType").toString()).isEqualTo("{\"name\":\"Query\"}")
-        assertThat(jsonres.get("mutationType").toString()).isEqualTo("{\"name\":\"Mutation\"}")
-
         JsonArray types = jsonres.get("types").getAsJsonArray()
-        assertThat(types.size()).isEqualTo(19)
 
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Author")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Book")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Query")).isTrue()
-        assertThat(hasValue(types, "kind", "OBJECT", "name", "Mutation")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput")).isTrue()
-        assertThat(hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput")).isTrue()
-
-        assertThat(CollectionUtils.isEqualCollection(getFields(types, "Query"), Arrays.asList("bookById"))).isTrue()
-        assertThat(CollectionUtils.isEqualCollection(getFields(types, "Author"), Arrays.asList("firstName"))).isTrue()
-        assertThat(CollectionUtils.isEqualCollection(getFields(types, "Book"), Arrays.asList("id", "name", "pageCount", "author"))).isTrue()
-        assertThat(CollectionUtils.isEqualCollection(getFields(types, "Mutation"), Arrays.asList("createNewBookRecord", "updateBookRecord", "removeBookRecord"))).isTrue()
+        expect:
+        result.errors.size() == 0
+        jsonres.size() == 4
+        jsonres.get("queryType").toString() == "{\"name\":\"Query\"}"
+        jsonres.get("mutationType").toString() == "{\"name\":\"Mutation\"}"
+        types.size() == 19
+        hasValue(types, "kind", "OBJECT", "name", "Author").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Book").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Query").booleanValue()
+        hasValue(types, "kind", "OBJECT", "name", "Mutation").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookID").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "BookInput").booleanValue()
+        hasValue(types, "kind", "INPUT_OBJECT", "name", "AuthorInput").booleanValue()
+        getFields(types, "Query") == ["bookById"]
+        getFields(types, "Author") == ["firstName"]
+        getFields(types, "Book") == ["id", "name", "pageCount", "author"]
+        getFields(types, "Mutation") == ["createNewBookRecord", "updateBookRecord", "removeBookRecord"]
     }
 
     private boolean hasValue(JsonArray array, String key1, String value1, String key2, String value2) {
