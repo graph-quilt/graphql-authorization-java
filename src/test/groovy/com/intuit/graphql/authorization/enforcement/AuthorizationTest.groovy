@@ -25,64 +25,126 @@ import static org.assertj.core.api.Assertions.assertThat
 
 class AuthorizationTest extends Specification{
 
-    private AuthzInstrumentation authzInstrumentation;
-    private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration();
-    private ScopeProvider scopeProvider = new HelperScopeProvider();
-    private GraphQLSchema schema;
-    private GraphQL graphql;
-    private String requestAllFields;
-    private String requestAllFieldsWithIntrospection;
-    private String requestAllBooks;
-    private String requestWithAllowedFields;
-    private String requestWithFragments;
-    private String requestWithInvalidFields;
-    private String mutationQuery;
-    private String fragmentsInMutationQuery;
-
-    private static String getGraphqlQuery(String filePath) {
-        def contentBuilder = new StringBuilder()
-        try {
-            new File(filePath).withReader(StandardCharsets.UTF_8 as String) { reader ->
-                reader.eachLine { line ->
-                    contentBuilder.append(line)
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace()
-        }
-        return contentBuilder.toString()
-    }
+    private AuthzInstrumentation authzInstrumentation
+    private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration()
+    private ScopeProvider scopeProvider = new HelperScopeProvider()
+    private GraphQLSchema schema
+    private GraphQL graphql
+    private String mutationQuery
+    private String fragmentsInMutationQuery
 
     @Before
     void setup() {
-        requestAllBooks = getGraphqlQuery("src/test/resources/queries/requestAllBooks.graphql")
-        requestAllFields = getGraphqlQuery("src/test/resources/queries/requestAllFields.graphql")
-        requestAllFieldsWithIntrospection = getGraphqlQuery(
-                "src/test/resources/queries/requestAllFieldsWithIntrospection.graphql")
-        requestWithAllowedFields = getGraphqlQuery("src/test/resources/queries/requestWithAllowedFields.graphql")
-        requestWithFragments = getGraphqlQuery("src/test/resources/queries/requestWithFragments.graphql")
-        requestWithInvalidFields = getGraphqlQuery("src/test/resources/queries/requestWithInvalidFields.graphql")
-        mutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQuery.graphql")
-        fragmentsInMutationQuery = getGraphqlQuery("src/test/resources/queries/mutationQueryWithFragments.graphql")
 
-        String sdl = TestStaticResources.TEST_SCHEMA;
-        schema = HelperBuildTestSchema.buildSchema(sdl);
+        mutationQuery = '''
+        mutation {
+          createNewBookRecord(input: {
+            id: "Book-7",
+            name: "New World",
+            pageCount: 1001,
+            author:{
+                  id: "Author-7"
+                  firstName: "Mickey",
+                  lastName: "Mouse"
+                }
+          }) {
+            id
+            name
+            pageCount
+            author{
+                  firstName
+                  lastName
+                }
+          }
+          updateBookRecord(input: {
+              id: "book-3",
+              name: "test updates",
+              pageCount: 100
+            }) {
+              id
+            }
+          removeBookRecord(input: {
+              id: "book-1"
+            }) {
+              id
+            }
+        }
+        '''
+        fragmentsInMutationQuery = '''
+        mutation {
+          createNewBookRecord(input: {
+            id: "Book-7",
+            name: "New World",
+            pageCount: 1001,
+            author:{
+                  id: "Author-7"
+                  firstName: "Mickey",
+                  lastName: "Mouse"
+                }
+          }) {
+            id
+            name
+            pageCount
+            author{
+                  ...nameFragment
+                }
+          }
+          updateBookRecord(input: {
+              id: "book-3",
+              name: "test updates",
+              pageCount: 100
+        
+            }) {
+              id
+            }
+          removeBookRecord(input: {
+              id: "book-1"
+            }) {
+              id
+            }
+        }
+        fragment nameFragment on Author {
+          firstName 
+          lastName
+        }
+        '''
+
+        String sdl = TestStaticResources.TEST_SCHEMA
+        schema = HelperBuildTestSchema.buildSchema(sdl)
 
         authzInstrumentation = AuthzInstrumentation.builder()
                 .configuration(authzClientConfiguration)
                 .schema(schema)
                 .scopeProvider(scopeProvider)
                 .authzListener(null)
-                .build();
+                .build()
 
-        GraphQL.Builder builder = GraphQL.newGraphQL(schema);
-        builder.instrumentation(authzInstrumentation);
-        graphql = builder.build();
+        GraphQL.Builder builder = GraphQL.newGraphQL(schema)
+        builder.instrumentation(authzInstrumentation)
+        graphql = builder.build()
     }
 
     @Test
     void "test authorization with some redactions with list"() {
 
+        given:
+        def requestAllBooks = '''
+        {
+            allBooks {
+                id
+                name
+                pageCount
+                author {
+                    firstName
+                    lastName
+                }
+                rating {
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput().query(requestAllBooks).context("Test.client6").build()
 
         when:
@@ -128,6 +190,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz Introspection With Some Redactions"() {
         given:
+        def requestAllFieldsWithIntrospection = '''
+        {
+            bookById(id: "book-2") {
+                __typename
+                id
+                name
+                pageCount
+                author {
+                    __typename
+                    firstName
+                    lastName
+                }
+                rating {
+                    __typename
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestAllFieldsWithIntrospection)
                 .context("Test.client2")
@@ -148,6 +230,18 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz happy case"() {
         given:
+        def requestWithAllowedFields = '''
+        {
+            bookById(id: "book-2") {
+                id
+                name
+                pageCount
+                author {
+                    firstName
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestWithAllowedFields)
                 .context("Test.client2")
@@ -165,6 +259,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz happy case all fields"() {
         given:
+        def requestAllFields = '''
+        {
+            bookById(id: "book-2") {
+                __typename
+                id
+                name
+                pageCount
+                author {
+                    __typename
+                    firstName
+                    lastName
+                }
+                rating {
+                    __typename
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestAllFields)
                 .context("Test.client1")
@@ -182,6 +296,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz happy case all fields with fragments"() {
         given:
+        def requestWithFragments = '''
+        {
+            bookById(id: "book-3") {
+                id
+                name
+                pageCount
+                author {
+                    ...nameFragment
+                }
+                rating {
+                    comments
+                    stars
+                }
+            }
+        }
+        fragment nameFragment on Author {
+            firstName
+            lastName
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestWithFragments)
                 .context("Test.client1")
@@ -200,6 +334,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test no Authz"() {
         given:
+        def requestAllFields = '''
+        {
+            bookById(id: "book-2") {
+                __typename
+                id
+                name
+                pageCount
+                author {
+                    __typename
+                    firstName
+                    lastName
+                }
+                rating {
+                    __typename
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestAllFields)
                 .context("")
@@ -216,6 +370,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz with invalid scope"() {
         given:
+        def requestAllFields = '''
+        {
+            bookById(id: "book-2") {
+                __typename
+                id
+                name
+                pageCount
+                author {
+                    __typename
+                    firstName
+                    lastName
+                }
+                rating {
+                    __typename
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestAllFields)
                 .context("INV001")
@@ -232,6 +406,26 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz multi scopes"() {
         given:
+        def requestAllFields = '''
+        {
+            bookById(id: "book-2") {
+                __typename
+                id
+                name
+                pageCount
+                author {
+                    __typename
+                    firstName
+                    lastName
+                }
+                rating {
+                    __typename
+                    comments
+                    stars
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestAllFields)
                 .context("Test.client3,Test.client2")
@@ -250,6 +444,18 @@ class AuthorizationTest extends Specification{
     @Test
     void "test authz with invalid field"() {
         given:
+        def requestWithInvalidFields = '''
+        {
+            bookById(id: "book-2") {
+                id
+                userName
+                pageCount
+                author {
+                    firstName
+                }
+            }
+        }
+        '''
         def executionInput = ExecutionInput.newExecutionInput()
                 .query(requestWithInvalidFields)
                 .context("Test.client2")
