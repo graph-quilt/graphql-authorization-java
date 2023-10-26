@@ -18,7 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import spock.lang.Specification
 
-class AuthorizationTest extends Specification{
+class AuthorizationSpec extends Specification{
 
     private AuthzInstrumentation authzInstrumentation
     private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration()
