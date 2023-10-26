@@ -20,13 +20,13 @@ import spock.lang.Specification
 
 class AuthorizationSpec extends Specification{
 
-    private AuthzInstrumentation authzInstrumentation
-    private AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration()
-    private ScopeProvider scopeProvider = new HelperScopeProvider()
-    private GraphQLSchema schema
-    private GraphQL graphql
-    private String mutationQuery
-    private String fragmentsInMutationQuery
+    AuthzInstrumentation authzInstrumentation
+    AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration()
+    ScopeProvider scopeProvider = new HelperScopeProvider()
+    GraphQLSchema schema
+    GraphQL graphql
+    String mutationQuery
+    String fragmentsInMutationQuery
 
     @Before
     void setup() {
@@ -698,7 +698,7 @@ class AuthorizationSpec extends Specification{
         getFields(types, "Mutation") == ["createNewBookRecord", "updateBookRecord", "removeBookRecord"]
     }
 
-    private boolean hasValue(JsonArray array, String key1, String value1, String key2, String value2) {
+    boolean hasValue(JsonArray array, String key1, String value1, String key2, String value2) {
         for (JsonElement element : array) {
             JsonObject obj = element.getAsJsonObject()
             if (obj.get(key1).getAsString().equals(value1) && obj.get(key2).getAsString().equals(value2)) {
@@ -708,7 +708,7 @@ class AuthorizationSpec extends Specification{
         return false
     }
 
-    private List<String> getFields(JsonArray array, String typeName) {
+    List<String> getFields(JsonArray array, String typeName) {
         for (JsonElement element : array) {
             JsonObject obj = element.getAsJsonObject()
             if (obj.get("name").getAsString().equals(typeName)) {
