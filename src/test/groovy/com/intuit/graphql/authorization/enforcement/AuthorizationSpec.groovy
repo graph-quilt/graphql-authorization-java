@@ -24,11 +24,10 @@ class AuthorizationSpec extends Specification{
     AuthzClientConfiguration authzClientConfiguration = new HelperAuthzClientConfiguration()
     ScopeProvider scopeProvider = new HelperScopeProvider()
     GraphQLSchema schema
-    GraphQL graphql
+    def graphql
     String mutationQuery
     String fragmentsInMutationQuery
 
-    @Before
     void setup() {
 
         mutationQuery = '''
@@ -119,10 +118,24 @@ class AuthorizationSpec extends Specification{
         graphql = builder.build()
     }
 
-    @Test
-    void "test authorization with some redactions with list"() {
+    def "test authorization with some redactions with list"() {
 
         given:
+        String sdl = TestStaticResources.TEST_SCHEMA
+        def schema = HelperBuildTestSchema.buildSchema(sdl)
+        def authzClientConfiguration = new HelperAuthzClientConfiguration()
+        def scopeProvider = new HelperScopeProvider()
+
+        def authzInstrumentation = AuthzInstrumentation.builder()
+                .configuration(authzClientConfiguration)
+                .schema(schema)
+                .scopeProvider(scopeProvider)
+                .authzListener(null)
+                .build()
+
+        GraphQL.Builder builder = GraphQL.newGraphQL(schema)
+        builder.instrumentation(authzInstrumentation)
+        def graphql = builder.build()
         def requestAllBooks = '''
         {
             allBooks {
@@ -159,8 +172,7 @@ class AuthorizationSpec extends Specification{
         data.contains("[id:book-3, name:Interview with the vampire, author:[firstName:Anne]]")
     }
 
-    @Test
-    void "test authz with no client configuration"() {
+    def "test authz with no client configuration"() {
         given:
         final AuthzClientConfiguration authzClientConfiguration = new AuthzClientConfiguration() {
             @Override
@@ -180,7 +192,7 @@ class AuthorizationSpec extends Specification{
         exception.message == "Clients missing from AuthZClientConfiguration"
     }
 
-    @Test
+    
     void "test authz Introspection With Some Redactions"() {
         given:
         def requestAllFieldsWithIntrospection = '''
@@ -219,7 +231,7 @@ class AuthorizationSpec extends Specification{
         dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman]]]"
     }
 
-    @Test
+    
     void "test authz happy case"() {
         given:
         def requestWithAllowedFields = '''
@@ -248,7 +260,7 @@ class AuthorizationSpec extends Specification{
         dataString == "[bookById:[id:book-2, name:Moby Dick, pageCount:635, author:[firstName:Herman]]]"
     }
 
-    @Test
+    
     void "test authz happy case all fields"() {
         given:
         def requestAllFields = '''
@@ -285,7 +297,7 @@ class AuthorizationSpec extends Specification{
         dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman, lastName:Melville], rating:[__typename:Rating, comments:Excellent, stars:5]]]"
     }
 
-    @Test
+    
     void "test authz happy case all fields with fragments"() {
         given:
         def requestWithFragments = '''
@@ -323,7 +335,7 @@ class AuthorizationSpec extends Specification{
 
     }
 
-    @Test
+    
     void "test no Authz"() {
         given:
         def requestAllFields = '''
@@ -360,7 +372,7 @@ class AuthorizationSpec extends Specification{
         errors[0].getMessage() == "403 - Not authorized to access field=bookById of type=Query"
     }
 
-    @Test
+    
     void "test authz with invalid scope"() {
         given:
         def requestAllFields = '''
@@ -397,7 +409,7 @@ class AuthorizationSpec extends Specification{
         errors[0].getMessage() == "403 - Not authorized to access field=bookById of type=Query"
     }
 
-    @Test
+    
     void "test authz multi scopes"() {
         given:
         def requestAllFields = '''
@@ -435,7 +447,7 @@ class AuthorizationSpec extends Specification{
         dataString == "[bookById:[__typename:Book, id:book-2, name:Moby Dick, pageCount:635, author:[__typename:Author, firstName:Herman], rating:[__typename:Rating, comments:Excellent, stars:5]]]"
     }
 
-    @Test
+    
     void "test authz with invalid field"() {
         given:
         def requestWithInvalidFields = '''
@@ -465,7 +477,7 @@ class AuthorizationSpec extends Specification{
         errors[0].getMessage().contains("Validation error (FieldUndefined@[bookById/userName]) : Field 'userName' in type 'Book' is undefined")
     }
 
-    @Test
+    
     void "test authz with mutation"() {
         given:
         def executionInput = ExecutionInput.newExecutionInput()
@@ -485,7 +497,7 @@ class AuthorizationSpec extends Specification{
         result.data.toString() == "[createNewBookRecord:[id:Book-7, name:New World, author:[firstName:Mickey]], removeBookRecord:[id:book-1]]"
     }
 
-    @Test
+    
     void "test authz with mutation multi scopes"() {
         given:
         def executionInput = ExecutionInput.newExecutionInput()
@@ -503,7 +515,7 @@ class AuthorizationSpec extends Specification{
         errors[0].getMessage().contains("403 - Not authorized to access field=lastName of type=Author")
     }
 
-    @Test
+    
     public void "test authz with mutation multi scopes2"() {
         given:
         def executionInput = ExecutionInput.newExecutionInput()
@@ -698,25 +710,29 @@ class AuthorizationSpec extends Specification{
         getFields(types, "Mutation") == ["createNewBookRecord", "updateBookRecord", "removeBookRecord"]
     }
 
-    boolean hasValue(JsonArray array, String key1, String value1, String key2, String value2) {
-        for (JsonElement element : array) {
-            JsonObject obj = element.getAsJsonObject()
-            if (obj.get(key1).getAsString().equals(value1) && obj.get(key2).getAsString().equals(value2)) {
+    def hasValue(JsonArray array, String key1, String value1, String key2, String value2) {
+        for (element in array) {
+            def obj = element.getAsJsonObject()
+            if (obj.get(key1).getAsString() == value1 && obj.get(key2).getAsString() == value2) {
                 return true
             }
         }
         return false
     }
 
-    List<String> getFields(JsonArray array, String typeName) {
-        for (JsonElement element : array) {
-            JsonObject obj = element.getAsJsonObject()
-            if (obj.get("name").getAsString().equals(typeName)) {
-                JsonArray fields = obj.get("fields").getAsJsonArray()
-                return fields.stream().map { it.getAsJsonObject().get("name").getAsString() }.collect(Collectors.toList())
+    def getFields(JsonArray array, String fieldName) {
+        def fields = []
+        array.iterator().each { element ->
+            def jsonObject = element.getAsJsonObject()
+            if (jsonObject.get("name").getAsString() == fieldName) {
+                def fieldArray = jsonObject.getAsJsonArray("fields")
+                fieldArray.iterator().each { fieldElement ->
+                    def fieldObject = fieldElement.getAsJsonObject()
+                    fields << fieldObject.get("name").getAsString()
+                }
             }
         }
-        return []
+        return fields
     }
 
 }
