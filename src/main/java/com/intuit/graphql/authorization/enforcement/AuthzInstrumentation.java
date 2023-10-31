@@ -162,7 +162,7 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
 
     return (FragmentDefinition)
         queryTransformer.transform(new RedactingVisitor(state, executionContext, authzListener,
-            authorizationExtension));
+            authorizationExtension, scopeProvider));
   }
 
 
@@ -177,7 +177,7 @@ public class AuthzInstrumentation extends SimpleInstrumentation {
         .build();
 
     return (SelectionSet) transformer.transform(new RedactingVisitor(state, executionContext, authzListener,
-        authorizationExtension));
+        authorizationExtension, scopeProvider));
   }
 
 

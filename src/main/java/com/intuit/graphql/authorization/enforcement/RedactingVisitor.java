@@ -6,6 +6,7 @@ import static graphql.schema.GraphQLTypeUtil.unwrapAll;
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.FieldAuthorizationEnvironment;
 import com.intuit.graphql.authorization.extension.FieldAuthorizationResult;
+import com.intuit.graphql.authorization.util.ScopeProvider;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorBuilder;
 import graphql.analysis.QueryVisitorFieldEnvironment;
@@ -27,15 +28,18 @@ public class RedactingVisitor extends QueryVisitorStub {
   private final AuthzListener authzListener;
   private final AuthorizationExtension authorizationExtension;
 
+  private final ScopeProvider scopeProvider;
+
 
   public RedactingVisitor(AuthzInstrumentation.AuthzInstrumentationState state,
-      ExecutionContext executionContext, AuthzListener authzListener,
-      AuthorizationExtension authorizationExtension) {
+                          ExecutionContext executionContext, AuthzListener authzListener,
+                          AuthorizationExtension authorizationExtension, ScopeProvider scopeProvider) {
     this.instrumentationState = state;
     this.executionContext = executionContext;
     this.authzListener = authzListener;
     this.authorizationExtension = authorizationExtension;
     this.typeFieldPermissionVerifier = instrumentationState.getTypeFieldPermissionVerifier();
+    this.scopeProvider = scopeProvider;
   }
 
   @Override
@@ -51,9 +55,14 @@ public class RedactingVisitor extends QueryVisitorStub {
       authzListener.onFieldRedaction(executionContext, queryVisitorFieldEnvironment);
       Field field = queryVisitorFieldEnvironment.getField();
 
+      String errorMessage = scopeProvider.getErrorMessage(RedactionContext.builder()
+              .fieldCoordinates(FieldCoordinates.coordinates(parentName, field.getName()))
+              .field(field)
+              .build());
+
       GraphQLError error = GraphqlErrorBuilder.newError()
           .errorType(DataFetchingException)
-          .message("403 - Not authorized to access field=%s of type=%s", field.getName(), parentName)
+          .message(errorMessage)
           .location(field.getSourceLocation())
           .build();
       instrumentationState.getAuthzErrors().add(error);

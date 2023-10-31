@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.intuit.graphql.authorization.extension.AuthorizationExtension;
 import com.intuit.graphql.authorization.extension.FieldAuthorizationResult;
+import com.intuit.graphql.authorization.util.ScopeProvider;
 import graphql.GraphQLError;
 import graphql.GraphqlErrorException;
 import graphql.analysis.QueryVisitorFieldEnvironment;
@@ -54,6 +55,10 @@ public class RedactingVisitorTest {
 
   @Mock
   private QueryVisitorFieldEnvironment queryVisitorFieldEnvironment;
+
+  @Mock
+  private ScopeProvider scopeProvider;
+
   @Mock
   private GraphQLFieldDefinition fieldDefinition;
 
@@ -75,7 +80,7 @@ public class RedactingVisitorTest {
     when(instrumentationState.getAuthzErrors()).thenReturn(graphQLErrorList);
 
     subjectUnderTest = new RedactingVisitor(instrumentationState, executionContext, authzListener,
-        authorizationExtension);
+            authorizationExtension, scopeProvider);
 
     when(queryVisitorFieldEnvironment.getParentType()).thenReturn(PARENT_TYPE);
     when(queryVisitorFieldEnvironment.getFieldDefinition()).thenReturn(fieldDefinition);
