@@ -16,7 +16,8 @@
 This library enforces access control on GraphQL queries by checking for allowed types and fields. A GraphQL query that 
 has access to some of the requested fields/types will return:
 * Requested fields it has access to
-* Authorization Error message for the fields it does not have access to
+* Authorization Error message for the fields it does not have access to. You can customize the error message by over-riding the
+`getErrorMessage` method in the `ScopeProvider` interface. 
     
 ```json lines
  "errors": [
