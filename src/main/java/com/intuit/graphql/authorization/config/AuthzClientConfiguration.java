@@ -12,6 +12,7 @@ public interface AuthzClientConfiguration {
 
   /**
    * Provide the access control map
+   * @return Queries by Client
    */
   Map<AuthzClient, List<String>> getQueriesByClient();
 }
