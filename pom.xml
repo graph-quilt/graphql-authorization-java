@@ -36,7 +36,7 @@
 
   <properties>
     <junit5.version>5.5.0</junit5.version>
-    <lombok.version>1.18.20</lombok.version>
+    <lombok.version>1.18.30</lombok.version>
     <graphql-java.version>20.4</graphql-java.version>
     <jacoco.enabled>true</jacoco.enabled>
     <jacoco.version>0.8.4</jacoco.version>
@@ -130,6 +130,19 @@
             <phase>verify</phase>
             <goals>
               <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.3.1</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
             </goals>
           </execution>
         </executions>

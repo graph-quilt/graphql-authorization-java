@@ -13,6 +13,10 @@ public interface AuthzListener {
   /**
    * This will be called just before a query field is redacted for unauthorized access. It gives the execution context
    * and queryVisitorFieldEnvironment as metadata of the field being redacted.
+   *
+   * @param executionContext ExecutionContext
+   * @param queryVisitorFieldEnvironment Environment
+   *
    */
   void onFieldRedaction(final ExecutionContext executionContext,
       final QueryVisitorFieldEnvironment queryVisitorFieldEnvironment);
